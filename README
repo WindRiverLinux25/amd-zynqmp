@@ -406,6 +406,7 @@ PREFERRED_PROVIDER_virtual/egl:xilinx-zynqmp = "libmali-xlnx"
 CUSTOMER_RECIPES:xilinx += "libmali-xlnx"
 CUSTOMER_RECIPES:xilinx += 'kernel-module-mali'
 LICENSE_FLAGS_ACCEPTED += "xilinx"
+MACHINE_FEATURES:xilinx-zynqmp += " mali400"
 _EOF
      $ bitbake wrlinux-image-std-sato
 

@@ -5,7 +5,7 @@ DEFAULTTUNE = "cortexa53"
 require conf/machine/include/arm/armv8a/tune-cortexa53.inc
 
 BSP_XILINX_DERIVED:append = " xilinx-zynqmp"
-MACHINE_FEATURES += "ext3 pci usbgadget usbhost vfat keyboard network mali400"
+MACHINE_FEATURES += "ext3 pci usbgadget usbhost vfat keyboard network"
 
 KERNEL_IMAGETYPE = "Image"
 KERNEL_DEVICETREE:xilinx-zynqmp = "xilinx/zynqmp-zcu102-rev1.0.dtb xilinx/zynqmp-zcu102-rev1.0-canfd.dtb"
