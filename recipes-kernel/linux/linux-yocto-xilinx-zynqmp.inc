@@ -10,3 +10,5 @@ TARGET_SUPPORTED_KTYPES:xilinx-zynqmp = "standard"
 KERNEL_VERSION_SANITY_SKIP = "1"
 SRCREV_machine:xilinx-zynqmp ?= "${AUTOREV}"
 SRCREV_meta:xilinx-zynqmp ?= "${AUTOREV}"
+
+KERNEL_DTC_FLAGS:append:xilinx-zynqmp = " -@"

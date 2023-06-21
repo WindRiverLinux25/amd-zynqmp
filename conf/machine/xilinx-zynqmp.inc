@@ -9,7 +9,6 @@ MACHINE_FEATURES += "ext3 pci usbgadget usbhost vfat keyboard network mali400"
 
 KERNEL_IMAGETYPE = "Image"
 KERNEL_DEVICETREE:xilinx-zynqmp = "xilinx/zynqmp-zcu102-rev1.0.dtb xilinx/zynqmp-zcu102-rev1.0-canfd.dtb"
-KERNEL_EXTRA_ARGS:append:xilinx-zynqmp = " DTC_FLAGS='-@'"
 
 SERIAL_CONSOLE = "115200 ttyPS0"
 
