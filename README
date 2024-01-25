@@ -193,6 +193,7 @@ BB_NO_NETWORK = '0'
 HDF_MACHINE = "zcu102-zynqmp"
 YAML_DT_BOARD_FLAGS ?= "{BOARD zcu102-rev1.0}"
 NON_MULTILIB_RECIPES:append = " fsbl-firmware pmu-firmware"
+CUSTOMER_RECIPES:xilinx += 'u-boot-xlnx'
 _EOF
      $ bitbake wrlinux-image-std
 
