@@ -4,11 +4,11 @@
 DEFAULTTUNE = "cortexa53"
 require conf/machine/include/arm/armv8a/tune-cortexa53.inc
 
-BSP_XILINX_DERIVED:append = " xilinx-zynqmp"
+BSP_XILINX_DERIVED:append = " amd-zynqmp"
 MACHINE_FEATURES += "ext3 pci usbgadget usbhost vfat keyboard network"
 
 KERNEL_IMAGETYPE = "Image"
-KERNEL_DEVICETREE:xilinx-zynqmp = "xilinx/zynqmp-zcu102-rev1.0.dtb xilinx/zynqmp-zcu102-rev1.0-canfd.dtb"
+KERNEL_DEVICETREE:amd-zynqmp = "xilinx/zynqmp-zcu102-rev1.0.dtb xilinx/zynqmp-zcu102-rev1.0-canfd.dtb"
 
 SERIAL_CONSOLE = "115200 ttyPS0"
 
@@ -17,7 +17,7 @@ PREFERRED_PROVIDER_virtual/boot-bin ??= "xilinx-bootbin"
 SOC_FAMILY ?= "zynqmp"
 
 PREFERRED_PROVIDER_virtual/kernel ??= "linux-yocto"
-PREFERRED_VERSION_linux-yocto ?= "6.1%"
+PREFERRED_VERSION_linux-yocto ?= "6.6%"
 
 MACHINE_EXTRA_RRECOMMENDS = " kernel-modules kernel-devicetree"
 IMAGE_FSTYPES += "tar.bz2 wic wic.bmap"
@@ -52,7 +52,7 @@ OSTREE_NETINST_ARGS ?= "${OSTREE_CONSOLE} bl=ufsd rdinit=/install instdev=${OSTR
 OSTREE_COPY_IMAGE_BOOT_FILES = "1"
 INITRAMFS_IMAGE ??= ""
 IMAGE_BOOT_FILES:append = " ${@bb.utils.contains('DISTRO_FEATURES', 'ostree', 'boot.scr', '', d)} ${@bb.utils.contains('DISTRO_FEATURES', 'ostree', '${INITRAMFS_IMAGE}-${MACHINE}.${INITRAMFS_FSTYPES};initramfs', '', d)}"
-MACHINEOVERRIDES:prepend:xilinx-zynqmp = "mali400:zynqmp:zynqmp-eg:"
+MACHINEOVERRIDES:prepend:amd-zynqmp = "mali400:zynqmp:zynqmp-eg:"
 
 OSTREE_BOOTSCR_PRECMD ?= "\
 setenv no_menu yes; \

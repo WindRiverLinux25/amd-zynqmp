@@ -1,1 +1,1 @@
-DRIDRIVERS:xilinx-zynqmp = "nouveau"
+DRIDRIVERS:amd-zynqmp = "nouveau"

@@ -105,7 +105,7 @@ Refer to the bootloader/README for information on how to make an SD
 bootable card. Deploy the kernel image, DTB image and file system image as follows:
 
 	# mount /dev/mmcblk0p2 /mnt/sd
-	# tar xfj wrlinux-image-std-xilinx-zynqmp.tar.bz2 --numeric-owner -C /mnt/sd
+	# tar xfj wrlinux-image-std-amd-zynqmp.tar.bz2 --numeric-owner -C /mnt/sd
 	# umount /mnt/sd
 	# mount /dev/mmcblk0p1 /mnt/sd
 	# cp path_to_Image /mnt/sd/boot
@@ -129,7 +129,7 @@ Run the following command to load the kernel image and DTB image:
 4.2.1 Setup configuration your NFS TFTP server, and deploy the rootfs tarball
 -----------------------------------------------------------------------------
 
-	# sudo tar jxf wrlinux-image-std-sato-xilinx-zynqmp.tar.bz2 -C path_to_rootfs
+	# sudo tar jxf wrlinux-image-std-sato-amd-zynqmp.tar.bz2 -C path_to_rootfs
 
 4.2.2 Set the u-boot environment variables and boot from NFS
 ------------------------------------------------------------
@@ -160,7 +160,7 @@ IMAGE_BOOT_FILES:append = " /< path-to-BOOT.BIN >/BOOT.BIN;BOOT.BIN"
 
 After building project, a partitioned WIC image will be created in the deploy folder as follows:
 
-  path_to_your_project/build/tmp-glibc/deploy/images/xilinx-zynqmp/wrlinux-image-<rootfs_type>-xilinx-zynqmp.wic
+  path_to_your_project/build/tmp-glibc/deploy/images/amd-zynqmp/wrlinux-image-<rootfs_type>-amd-zynqmp.wic
 
 There are two partitions in this WIC images, the first one is to hold the boot
 images(including kernel/dtb/BOOT.BIN), the second is the related root file system.
@@ -198,7 +198,7 @@ _EOF
      $ bitbake wrlinux-image-std
 
 After building project, a partitioned WIC image will be created in the deploy folder as follows:
-path_to_your_project/build/tmp-glibc/deploy/images/xilinx-zynqmp/wrlinux-image-<rootfs_type>-xilinx-zynqmp.wic
+path_to_your_project/build/tmp-glibc/deploy/images/amd-zynqmp/wrlinux-image-<rootfs_type>-amd-zynqmp.wic
 
 5.3 Boot the board from the WIC SD card
 ---------------------------------------
@@ -230,7 +230,7 @@ the expected target image as follows:
 ===================
 
 You need to add feature/kexec support as follow:
-	./wrlinux-x/setup.sh --machines xilinx-zynqmp --templates feature/kexec,feature/kdump
+	./wrlinux-x/setup.sh --machines amd-zynqmp --templates feature/kexec,feature/kdump
 
 7.1 kexec
 ---------
@@ -269,8 +269,8 @@ According to the vendor, only some monitors in the following link are supported:
 ----------------
 
 Show and adjust screen resolution, some draw examples
-   root@xilinx-zynqmp:~# export DISPLAY=:0.0
-   root@xilinx-zynqmp:~# xrandr
+   root@amd-zynqmp:~# export DISPLAY=:0.0
+   root@amd-zynqmp:~# xrandr
    Screen 0: minimum 320 x 200, current 1024 x 768, maximum 4096 x 4096
    DP-1 connected primary 1024x768+0+0 518mm x 324mm
       1920x1080     24.00    23.98
@@ -281,7 +281,7 @@ Show and adjust screen resolution, some draw examples
       720x480       60.00    59.94
       640x480       75.00    60.00    59.94
       720x400       70.08
-   root@xilinx-zynqmp:~# xrandr -s 1920x1080
+   root@amd-zynqmp:~# xrandr -s 1920x1080
 
 8.2.2 DP Audio
 --------------
@@ -431,15 +431,15 @@ As below is the step how to build a graphics enabled system:
      $ . ./oe-init-build-env
      $ cat << _EOF >> conf/local.conf
 DISTRO ?= "wrlinux-graphics"
-PREFERRED_PROVIDER_virtual/mesa:xilinx-zynqmp = "mesa-gl"
-PREFERRED_PROVIDER_virtual/libgl:xilinx-zynqmp = "mesa-gl"
-PREFERRED_PROVIDER_virtual/libgles1:xilinx-zynqmp = "libmali-xlnx"
-PREFERRED_PROVIDER_virtual/libgles2:xilinx-zynqmp = "libmali-xlnx"
-PREFERRED_PROVIDER_virtual/egl:xilinx-zynqmp = "libmali-xlnx"
+PREFERRED_PROVIDER_virtual/mesa:amd-zynqmp = "mesa-gl"
+PREFERRED_PROVIDER_virtual/libgl:amd-zynqmp = "mesa-gl"
+PREFERRED_PROVIDER_virtual/libgles1:amd-zynqmp = "libmali-xlnx"
+PREFERRED_PROVIDER_virtual/libgles2:amd-zynqmp = "libmali-xlnx"
+PREFERRED_PROVIDER_virtual/egl:amd-zynqmp = "libmali-xlnx"
 CUSTOMER_RECIPES:xilinx += "libmali-xlnx"
 CUSTOMER_RECIPES:xilinx += 'kernel-module-mali'
 LICENSE_FLAGS_ACCEPTED += "xilinx"
-MACHINE_FEATURES:xilinx-zynqmp += " mali400"
+MACHINE_FEATURES:amd-zynqmp += " mali400"
 _EOF
      $ bitbake wrlinux-image-std-sato
 
@@ -459,7 +459,7 @@ And mkfs a new filesystem on your hard disk partition.
 9 FPGA Bitstream File Update
 ============================
 
-On xilinx-zynqmp platform, customer is able to update their own FPGA design image
+On amd-zynqmp platform, customer is able to update their own FPGA design image
 from linux side in running time. A simple example as below:
 
 9.1 Prepare FPGA bitstream file
@@ -472,7 +472,7 @@ Then, extract the .bit file from package 2019.2-zcu102-release.tar.xz and rename
 9.2 Generate binary file
 --------------------------
 
-Because xilinx-zynqmp platform only supports binary format for updating FPGA, it is need
+Because amd-zynqmp platform only supports binary format for updating FPGA, it is need
 to change the .bit file into binary format with below commands:
  - set environment variable
  # source xxx/Vivado/Vivado/2019.2/settings64.sh
@@ -575,7 +575,7 @@ _EOF
      $ bitbake device-tree
 
 Once bitbake successfully, you will find the dtb file "system.dtb" in the directory:
-<path-of-project>/build/tmp-glibc/deploy/images/xilinx-zynqmp/system.dtb
+<path-of-project>/build/tmp-glibc/deploy/images/amd-zynqmp/system.dtb
 
 NOTE: Please make sure the version of the xsct tools is in accordance with the version
 of HDF/XSA files, and there may be some unpredictable problems if using the HDF/XSA
