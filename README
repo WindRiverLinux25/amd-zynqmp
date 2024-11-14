@@ -188,6 +188,7 @@ CUSTOMER_RECIPES:xilinx += 'device-tree'
 CUSTOMER_RECIPES:virtualization-layer += 'python3-dtc'
 CUSTOMER_RECIPES:xilinx-tools += 'bitstream-extraction'
 CUSTOMER_RECIPES:xilinx-tools += 'external-hdf'
+CUSTOMER_RECIPES:xilinx-tools += 'xsct'
 CUSTOMER_RECIPES:xilinx-standalone += 'pmu-firmware'
 CUSTOMER_RECIPES:xilinx-standalone += 'fsbl-firmware'
 PREFERRED_PROVIDER_virtual/boot-bin = "xilinx-bootbin"
@@ -433,6 +434,7 @@ As below is the step how to build a graphics enabled system:
      $ cd path_to_your_project
      $ . ./environment-setup-x86_64-wrlinuxsdk-linux
      $ . ./oe-init-build-env
+     $ bitbake-layers add-layer <path-of-layers>/meta-xilinx/meta-xilinx-mali400
      $ cat << _EOF >> conf/local.conf
 DISTRO ?= "wrlinux-graphics"
 PREFERRED_PROVIDER_virtual/mesa:amd-zynqmp = "mesa-gl"
@@ -444,6 +446,7 @@ CUSTOMER_RECIPES:xilinx += "libmali-xlnx"
 CUSTOMER_RECIPES:xilinx += 'kernel-module-mali'
 LICENSE_FLAGS_ACCEPTED += "xilinx"
 MACHINE_FEATURES:amd-zynqmp += " mali400"
+DISTRO_FEATURES:append = " libmali"
 _EOF
      $ bitbake wrlinux-image-std-sato
 
