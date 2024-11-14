@@ -1,1 +1,0 @@
-DRIDRIVERS:amd-zynqmp = "nouveau"
