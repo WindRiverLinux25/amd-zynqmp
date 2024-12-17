@@ -15,6 +15,7 @@ This layer depends on the following layers supplied with Wind River Linux:
 	meta-xilinx/meta-xilinx-core
 	meta-xilinx/meta-xilinx-standalone
 	meta-xilinx-tools
+	meta-arm/meta-arm
 
 Maintenance
 -----------
@@ -179,26 +180,23 @@ create a bootable WIC image by following the steps as below:
      $ . ./oe-init-build-env
      $ cat << _EOF >> conf/local.conf
 CUSTOMER_RECIPES:xilinx += 'bootgen'
+CUSTOMER_RECIPES:xilinx += 'u-boot-xlnx'
 CUSTOMER_RECIPES:xilinx += 'u-boot-xlnx-scr'
 CUSTOMER_RECIPES:xilinx += 'xilinx-bootbin'
 CUSTOMER_RECIPES:xilinx += 'fsbl'
 CUSTOMER_RECIPES:xilinx += 'arm-trusted-firmware'
 CUSTOMER_RECIPES:xilinx += 'pmufw'
 CUSTOMER_RECIPES:xilinx += 'device-tree'
-CUSTOMER_RECIPES:virtualization-layer += 'python3-dtc'
 CUSTOMER_RECIPES:xilinx-tools += 'bitstream-extraction'
 CUSTOMER_RECIPES:xilinx-tools += 'external-hdf'
 CUSTOMER_RECIPES:xilinx-tools += 'xsct'
 CUSTOMER_RECIPES:xilinx-standalone += 'pmu-firmware'
 CUSTOMER_RECIPES:xilinx-standalone += 'fsbl-firmware'
-PREFERRED_PROVIDER_virtual/boot-bin = "xilinx-bootbin"
-IMAGE_BOOT_FILES:append = " \${DEPLOY_DIR_IMAGE}/boot.bin;BOOT.BIN"
-IMAGE_INSTALL:append = " xilinx-bootbin"
+CUSTOMER_RECIPES:xilinx += 'u-boot-xlnx-uenv'
+CUSTOMER_RECIPES:xilinx += 'trusted-firmware-a'
+CUSTOMER_RECIPES:xilinx-standalone += 'embeddedsw-source'
+WRL_ZYNQMP_BOOTBIN_TARGET = 'zcu102'
 BB_NO_NETWORK = '0'
-HDF_MACHINE = "zcu102-zynqmp"
-YAML_DT_BOARD_FLAGS ?= "{BOARD zcu102-rev1.0}"
-NON_MULTILIB_RECIPES:append = " fsbl-firmware pmu-firmware"
-CUSTOMER_RECIPES:xilinx += 'u-boot-xlnx'
 _EOF
      $ bitbake wrlinux-image-std
 
