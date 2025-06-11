@@ -21,8 +21,7 @@ This BSP supports the following boards:
 2. Change History
 =================
 
-  - 2024/08 (LINUXPG-2291): Add BSP support for ZYNQMP ZCU102 board based on xilinx-sdk-2024.01
-  - 2025/01 (LINUXEXEC-33567): Update BSP support for ZYNQMP ZCU102 board based on xilinx-sdk-2024.02
+  - 2025/09 (LINUXPG-2606): Add BSP support for ZYNQMP ZCU102 board based on xilinx-sdk-2025.01
 
 3. BSP Features
 ===============
@@ -33,25 +32,23 @@ This BSP supports the following boards:
 The following BSP features are validated and supported on boards where
 the corresponding h/w features exist.
 
-  o General Platform
-	+ DMA Engine: The enhanced direct memory access (EDMA) controller
-
   o Bus
-	+ CAN: ZynqMP
-	+ CANFD: Xilinx FPGA CANFD logiCORE IP 3.0
-	+ I2C: Cadence 
-	+ SPI: ZynqMP
+	+ I2C: On-Chip I2C Controller
+	+ Quad-SPI: On-Chip Quad-SPI controller
 	+ PCIe: On-Chip PCIe controller
-	+ USB: Host/Gadget/OTG mode
+	+ USB 2.0: Host/Gadget
+	+ USB 3.0: Host/Gadget/OTG
 
   o Network
-	+ MACB: Gigabits Controller
-	+ PHY: Fixed MDIO
+	+ CAN: On-Chip CAN controller
+	+ Ethernet: GEM Ethernet Controllers
+	+ PHY: TI DP83867IRPAP Ethernet RGMII PHY
 
   o Storage
-	+ NOR Flash: N25Q512A 128MB
-	+ Sata CEVA
-	+ SD/MMC:
+	+ QSPI NOR Flash: N25Q512A 128MB
+	+ EEPROM: M24C08
+	+ SATA: On-Chip SATA controller
+	+ SD/MMC: On-Chip SD/SDIO/eMMC Controller
 
   o Power Mgmt
 	+ CPU hotplug
@@ -59,27 +56,42 @@ the corresponding h/w features exist.
 	+ CPU Frequency
 
   o Misc Devices
-	+ EDAC zynqmp memory controller
-	+ INA2xx
-	+ RTC
-	+ UART
+	+ DMA Engine: General purpose DMA controller
+	+ RTC: On-Chip Real Time Clock unit
+	+ UART: On-Chip UART Controller
+	+ SYSMON:
+		+ PMBUS Monitor INA226
+		+ On-Chip Monitor AMS
 
   o Graphic
-	+ ARM Mali-400 MP2(r8p0-01rel0)
-	+ DisplayPort
-	+ Xilinx DRM
-	+ Xilinx FB
+	+ GPU: ARM Mali-400 MP2(r8p0-01rel0)
+	+ Display: VESA DisplayPort 1.2
 
-3.2 Unsupported Features
+  o Security
+	+ AES: ZynqMP AES-GCM engine
+	+ RSA: ZynqMP RSA engine
+	+ SHA: ZynqMP SHA-3 engine
+
+3.2 Limited Supported Features
+------------------------------
+
+  o Network
+	+ FPGA CANFD: Based on Xilinx CANFD v3.0 logiCORE IP
+
+3.3 Unsupported Features
 ------------------------
 
 The following features are not supported and not validated:
 
-  x HPC0, HPC1 ports (One for imx274 camera)
+  x HPC0, HPC1 ports
   x Two HDMI ports
   x 2x2 SFP/SFP+ ports
-  x SMMU
-
+  x IOMMU: SMMU Memory Management (SMMU-500)
+  x SPI: On-Chip SPI controller
+  x NAND: On-Chip NAND controller
+  x DDR-EDAC: DDR Error Detection And Correction
+  x OCRAM-EDAC: OCRAM Error Detection And Correction
+  x RemotePROC: inter-process communications between APUs and RPUs
 
 4. BSP Notes
 ============
@@ -93,4 +105,4 @@ in a different environment it may possibly have some issues.
 	Processor:              ZYMQMP (410fd034 revision 4, Chip ID: xczu9eg)
 	Board Revision:	        Rev 1.0/1.1
 	BootLoader:             U-Boot
-	BootLoader Version:     U-Boot 2024.01
+	BootLoader Version:     U-Boot 2025.01
