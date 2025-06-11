@@ -14,7 +14,6 @@ This layer depends on the following layers supplied with Wind River Linux:
 	meta-xilinx/meta-xilinx-bsp
 	meta-xilinx/meta-xilinx-core
 	meta-xilinx/meta-xilinx-standalone
-	meta-xilinx/meta-xilinx-mali400
 	meta-arm/meta-arm
 	meta-xilinx-tools
 
@@ -33,7 +32,7 @@ This layer and wrlinux layer should be added to bblayers.conf.
 
 License
 -------
-Copyright (C) 2024 Wind River Systems, Inc.
+Copyright (C) 2025 Wind River Systems, Inc.
 
 Source code included in the tree for individual recipes is under the LICENSE
 stated in the associated recipe (.bb file) unless otherwise stated.
@@ -201,9 +200,9 @@ Run the following steps to generate BOOT.BIN
 
 	$ git clone https://github.com/Xilinx/soc-prebuilt-firmware.git
 	$ cd soc-prebuilt-firmware
-	$ git checkout xlnx_rel_v2024.2
+	$ git checkout xlnx_rel_v2025.1
 	$ cd zcu102-zynqmp
-	$ source <path_to_Vivado>/2024.2/settings64.sh
+	$ source <path_to_Vivado>/2025.1/settings64.sh
 	$ bootgen -arch zynqmp -image bootgen.bif -o ./BOOT.BIN -w
 
 And the BOOT.BIN can be installed into the WIC image:
@@ -212,7 +211,7 @@ And the BOOT.BIN can be installed into the WIC image:
 	$ . ./environment-setup-x86_64-wrlinuxsdk-linux
     $ . ./oe-init-build-env
     $ cat << _EOF >> conf/local.conf
-IMAGE_BOOT_FILES:append = " /< path-to-BOOT.BIN >/BOOT.BIN;BOOT.BIN"
+IMAGE_BOOT_FILES:append = " /< path_to_BOOT.BIN >/BOOT.BIN;BOOT.BIN"
 _EOF
     $ bitbake wrlinux-image-std
 
@@ -248,6 +247,7 @@ CUSTOMER_RECIPES:xilinx-tools += 'external-hdf'
 CUSTOMER_RECIPES:xilinx-tools += 'xsct'
 CUSTOMER_RECIPES:xilinx-standalone += 'pmu-firmware'
 CUSTOMER_RECIPES:xilinx-standalone += 'fsbl-firmware'
+CUSTOMER_RECIPES:xilinx-standalone += 'embeddedsw-source'
 MACHINE_FEATURES:amd-zynqmp += " xilinx-bootbin"
 WRL_ZYNQMP_BOOTBIN_TARGET = 'zcu102'
 BB_NO_NETWORK = '0'
@@ -508,7 +508,7 @@ the vendor, the following link is their answer:
 8.7 PCIe
 --------
 
-Only some limited PCIe devices were supported based on the SDK v2024.02 and the
+Only some limited PCIe devices were supported based on the SDK v2025.01 and the
 following link:
 
   https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18842417/Linux+ZynqMP+PS-PCIe+Root+Port+Driver
@@ -529,13 +529,14 @@ vendor if you have any questions about the libmali-xlnx software license terms.
 
 As below is the step how to build a graphics enabled system:
 
-  1) set BB_NO_NETWORK as '0' in <path-of-project>/build/conf/local.conf file.
+  1) set BB_NO_NETWORK as '0' in <path_to_project>/build/conf/local.conf file.
 
   2) Launch bitbake to build an image with graphics support
 
      $ cd path_to_your_project
      $ . ./environment-setup-x86_64-wrlinuxsdk-linux
      $ . ./oe-init-build-env
+     $ bitbake-layers add-layer <path_to_layers>/meta-xilinx/meta-xilinx-mali400
      $ cat << _EOF >> conf/local.conf
 DISTRO ?= "wrlinux-graphics"
 PREFERRED_PROVIDER_virtual/mesa:amd-zynqmp = "mesa-gl"
@@ -547,6 +548,7 @@ CUSTOMER_RECIPES:xilinx-mali400 += "libmali-xlnx"
 CUSTOMER_RECIPES:xilinx-mali400 += "kernel-module-mali"
 LICENSE_FLAGS_ACCEPTED += "xilinx"
 MACHINE_FEATURES:amd-zynqmp += " mali400"
+DISTRO_FEATURES:append = " libmali"
 _EOF
      $ bitbake wrlinux-image-std-sato
 
@@ -581,9 +583,9 @@ to change the .bit file into binary format with below commands:
 
 	$ git clone https://github.com/Xilinx/soc-prebuilt-firmware.git
 	$ cd soc-prebuilt-firmware
-	$ git checkout xlnx_rel_v2024.2
+	$ git checkout xlnx_rel_v2025.1
 	$ cd zcu102-zynqmp
-	$ source <path_to_Vivado>/2024.2/settings64.sh
+	$ source <path_to_Vivado>/2025.1/settings64.sh
 	$ bootgen -image Bitstream.bif -arch zynqmp -o ./system.bit.bin -w
 
 The content of Bitstream.bif is listed as follow:
@@ -668,10 +670,10 @@ https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841847/Solution+ZynqMP+P
 
 10 Generate dtb based on XSA
 ============================
-Firstly, set BB_NO_NETWORK as '0' in <path-of-project>/build/conf/local.conf file.
+Firstly, set BB_NO_NETWORK as '0' in <path_to_project>/build/conf/local.conf file.
 Then following the steps as below to generate the dtb files based on the XSA files:
 
-     $ cd path-of-project
+     $ cd <path_to_project>
      $ . ./environment-setup-x86_64-wrlinuxsdk-linux
      $ . ./oe-init-build-env
      $ cat << _EOF >> conf/local.conf
@@ -683,7 +685,7 @@ _EOF
      $ bitbake device-tree
 
 Once bitbake successfully, you will find the dtb file "system.dtb" in the directory:
-<path-of-project>/build/tmp-glibc/deploy/images/amd-zynqmp/system.dtb
+<path_to_project>/build/tmp-glibc/deploy/images/amd-zynqmp/system.dtb
 
 NOTE: Please make sure the version of the xsct tools is in accordance with the version
 of HDF/XSA files, and there may be some unpredictable problems if using the HDF/XSA
@@ -796,7 +798,7 @@ Prerequisites:
   * RSA key pair related knowledges, like using openssl to make RSA key pair.
   * Please carefully read chapter 8, 11, 12 in [3], chapter 8 and 16 in [4],
     chapter 5 in [9] and all content of [5] in References section.
-  * Download and install Xilinx SDK v2024.2 or later version via link [7].
+  * Download and install Xilinx SDK v2025.1 or later version via link [7].
 
 After having downloaded and installed Xilinx SDK, then you can start to make
 RSA key pair and assemble your own zynqmp BOOT.BIN by bootgen command.
