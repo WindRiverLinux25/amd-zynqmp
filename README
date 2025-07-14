@@ -80,7 +80,7 @@ Note: The preempt-rt kernel type can be used with this BSP/Machine.
 To get a list of patches applied to the kernel specific to this BSP along with
 patch descriptions use git-whatchanged on the default kernel. For example:
 
-	%> cd tmp-glibc/work-shared/<bsp_name>/kernel-source
+	%> cd tmp/work-shared/<bsp_name>/kernel-source
 	%> git whatchanged <kernel_version>/standard/base..<kernel_version>/standard/<bsp_name>
 
 
@@ -97,7 +97,7 @@ following commands:
 	# make xilinx/zynqmp-zcu102-rev1.0.dtb
 
 The resulting DTB file can be found here:
-path_to_project/build/tmp-glibc/work/<bsp name>-wrs-linux/linux-yocto/<kernel version>/linux-<bsp name>-<kernel type>-build/arch/arm64/boot/dts/xilinx/
+path_to_project/build/tmp/work/<bsp name>-wrs-linux/linux-yocto/<kernel version>/linux-<bsp name>-<kernel type>-build/arch/arm64/boot/dts/xilinx/
 
 Assuming all files can be downloaded from a network, deploy your board and host
 properly to ensure your network is available from the board.
@@ -156,9 +156,9 @@ https://docs.yoctoproject.org/singleindex.html#creating-partitioned-images-using
 
 This BSP supports disk images for SD card.
 After building the project, user will get a WIC image under the directory
-tmp-glibc/deploy/images/<bsp name>/, such as:
+tmp/deploy/images/<bsp name>/, such as:
 
-	<path_to_your_project>/tmp-glibc/deploy/images/amd-zynqmp/wrlinux-image-<rootfs_type>-amd-zynqmp.rootfs.wic
+	<path_to_your_project>/tmp/deploy/images/amd-zynqmp/wrlinux-image-<rootfs_type>-amd-zynqmp.rootfs.wic
 
 NOTE: The WIC image built in WRLinux don't contain the bootloader BOOT.BIN
 by default. Please refer to section 6 for the detailed description to create
@@ -256,11 +256,11 @@ _EOF
 
 After building project, BOOT.BIN can be found at:
 
-	<path_to_your_project>/tmp-glibc/deploy/images/amd-zynqmp/boot.bin
+	<path_to_your_project>/tmp/deploy/images/amd-zynqmp/boot.bin
 
 And it has been installed to the WIC image:
 
-	<path_to_your_project>/tmp-glibc/deploy/images/amd-zynqmp/wrlinux-image-<rootfs_type>-amd-zynqmp.wic
+	<path_to_your_project>/tmp/deploy/images/amd-zynqmp/wrlinux-image-<rootfs_type>-amd-zynqmp.wic
 
 NOTE:
 1. the BOOT.BIN generated with the prebuilt firmwares is different to
@@ -304,15 +304,15 @@ _EOF
 
 After building project, BOOT.BIN can be found at:
 
-	<path_to_your_project>/tmp-glibc/deploy/images/amd-zynqmp/boot.bin
+	<path_to_your_project>/tmp/deploy/images/amd-zynqmp/boot.bin
 
 The dtb file can be found at:
 
-	<path_to_your_project>/tmp-glibc/deploy/images/amd-zynqmp/system.dtb
+	<path_to_your_project>/tmp/deploy/images/amd-zynqmp/system.dtb
 
 BOOT.BIN and system.dtb have been installed to the WIC image:
 
-	<path_to_your_project>/tmp-glibc/deploy/images/amd-zynqmp/wrlinux-image-<rootfs_type>-amd-zynqmp.wic
+	<path_to_your_project>/tmp/deploy/images/amd-zynqmp/wrlinux-image-<rootfs_type>-amd-zynqmp.wic
 
 NOTE:
 1. The xsa file MUST include the bitstream file when exported in Vivado. This
@@ -401,7 +401,7 @@ Connect loudspeaker or headset with display monitor, and then run below commands
 To wake up system, customer can use network, rtc, console and so on, it depends on concrete scenario.
 Below is an example to wake up system by console.
 Run below command before entering suspend status.
-	# echo enabled > /sys/devices/platform/axi/ff000000.serial/tty/ttyPS0/power/wakeup
+	# echo enabled > /sys/class/tty/ttyPS0/power/wakeup
 And then, press Enter key in console window.
 
 8.4 System Monitor
@@ -685,7 +685,7 @@ _EOF
      $ bitbake device-tree
 
 Once bitbake successfully, you will find the dtb file "system.dtb" in the directory:
-<path_to_project>/build/tmp-glibc/deploy/images/amd-zynqmp/system.dtb
+<path_to_project>/build/tmp/deploy/images/amd-zynqmp/system.dtb
 
 NOTE: Please make sure the version of the xsct tools is in accordance with the version
 of HDF/XSA files, and there may be some unpredictable problems if using the HDF/XSA
@@ -892,7 +892,7 @@ NOTE: Add the following line to conf/local.conf to enable the detailed decryptio
 	XSCTH_BUILD_DEBUG = "1"
 
 The BOOT.BIN file is created in the deploy dir as follows:
-	tmp-glibc/deploy/images/amd-zynqmp/boot.bin
+	tmp/deploy/images/amd-zynqmp/boot.bin
 
 11.6. Programming BBRAM and eFUSE
 ---------------------------------
