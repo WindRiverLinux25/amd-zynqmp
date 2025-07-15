@@ -12,6 +12,7 @@ So, add the FORCE flag to build  dts/dt.dtb forcely, so that there
 is a expected public key into final u-boot.elf file.
 
 Signed-off-by: Meng Li <Meng.Li@windriver.com>
+Upstream-Status: Inappropriate [WRLinux specific]
 ---
  Makefile | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
@@ -21,14 +22,14 @@ index ab0c42c133..83d0d64889 100755
 --- a/Makefile
 +++ b/Makefile
 @@ -1005,7 +1005,7 @@ endif
- PHONY += dtbs
+ PHONY += dtbs dtbs_check
  dtbs: dts/dt.dtb
  	@:
--dts/dt.dtb: u-boot
-+dts/dt.dtb: u-boot FORCE
+-dts/dt.dtb: dtbs_prepare u-boot
++dts/dt.dtb: dtbs_prepare u-boot FORCE
  	$(Q)$(MAKE) $(build)=dts dtbs
  
- quiet_cmd_copy = COPY    $@
+ dtbs_prepare: prepare3
 -- 
 2.36.1
 
