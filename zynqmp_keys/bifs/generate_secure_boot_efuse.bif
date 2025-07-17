@@ -5,10 +5,10 @@ the_ROM_image:
 	[pskfile] <path_to_place_keys>/psk0.pem
 	[sskfile] <path_to_place_keys>/ssk0.pem
 	[auth_params] ppk_select=0; spk_id=0x12345678
-	[bootloader, destination_cpu=a53-0, authentication=rsa, encryption=aes, aeskeyfile=aes0.nky] ./recipe-sysroot/boot/fsbl.elf
+	[bootloader, destination_cpu=a53-0, authentication=rsa, encryption=aes, aeskeyfile=<path_to_place_nky>/aes0.nky] fsbl.elf
 	[destination_cpu=pmu] ./recipe-sysroot/boot/pmufw.elf
-	[authentication=rsa, encryption=aes, aeskeyfile=aes1.nky, destination_device = pl] ../../../../deploy/images/amd-zynqmp/download-amd-zynqmp.bit
-	[authentication=rsa, encryption=aes, aeskeyfile=aes2.nky, destination_cpu=a53-0, exception_level=el-3, trustzone] ./recipe-sysroot/boot/arm-trusted-firmware.elf
-	[authentication=rsa, encryption=aes, aeskeyfile=aes3.nky, destination_cpu=a53-0, load=0x100000] ./recipe-sysroot/boot/devicetree/system-top.dtb
-	[authentication=rsa, encryption=aes, aeskeyfile=aes4.nky, destination_cpu=a53-0, exception_level=el-2] ./recipe-sysroot/boot/u-boot.elf
+	[authentication=rsa, encryption=aes, aeskeyfile=<path_to_place_nky>/aes1.nky, destination_device = pl] download-amd-zynqmp.bit
+	[authentication=rsa, encryption=aes, aeskeyfile=<path_to_place_nky>/aes2.nky, destination_cpu=a53-0, exception_level=el-3, trustzone] arm-trusted-firmware.elf
+	[authentication=rsa, encryption=aes, aeskeyfile=<path_to_place_nky>/aes3.nky, destination_cpu=a53-0, load=0x100000] system-top.dtb
+	[authentication=rsa, encryption=aes, aeskeyfile=<path_to_place_nky>/aes4.nky, destination_cpu=a53-0, exception_level=el-2] u-boot.elf
 }
