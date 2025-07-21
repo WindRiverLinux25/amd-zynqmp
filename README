@@ -976,8 +976,10 @@ There is another example based on wic image, load kernel from sd boot partition 
 
 	# setenv bootfile fitImage
 	# setenv loadaddr 0x18000000
+	# setenv dtbfile conf-zynqmp-zcu102-rev1.0.dtb
+	# setenv dtbofile conf-zynqmp-secure-boot.dtbo
 	# setenv bootargs console=ttyPS0,115200n8 root=/dev/mmcblk0p2 rw earlycon=cdns,0xFF000000 ip=dhcp clk_ignore_unused
-	# setenv bootcmd 'fatload mmc 0:1 $loadaddr $bootfile; bootm $loadaddr'
+	# setenv bootcmd 'fatload mmc 0:1 $loadaddr $bootfile; bootm ${loadaddr}#${dtbfile}#${dtbofile}'
 	# run bootcmd
 
 11.9. Notes

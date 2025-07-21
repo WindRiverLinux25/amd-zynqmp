@@ -23,3 +23,7 @@ FIT_SIGN_ALG ?= "rsa2048"
 # Xilinx secure boot feature supports sha1 and sha256 digest.
 # Set FIT_HASH_ALG as the expected value in local.conf. The default one is sha256.
 FIT_HASH_ALG ?= "sha256"
+
+UBOOT_DTB_LOADADDRESS ?= "0x19000000"
+UBOOT_DTBO_LOADADDRESS ?= "0x19000000"
+KERNEL_DEVICETREE:append = " xilinx/zynqmp-secure-boot.dtbo"
