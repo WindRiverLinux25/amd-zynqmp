@@ -714,7 +714,7 @@ Secure boot feature depends on template feature/secure-boot.
 11.2. Preparations & Prerequisites
 ----------------------------------
 To use secure boot feature, assume that you are:
- - Experienced with WRL linux embedded software development
+ - Experienced with WRLinux embedded software development
  - Experienced with Xilinx development tools such as xSDK.
  - Familiar with ARMv8 and ZynMP SoC architecture.
  - Familiar with the basic concepts of security, like openssl, authentication,
@@ -725,10 +725,10 @@ Hardware preparations:
  - A host machine installed with aarch64 cross-compile toolchain.
  - Xilinx ZynqMP ZCU102 development sets with Silicon version 4.
 
-11.3. WRL ZynqMP Security Introduction & Hardware Root Of Trust Secure Boot
----------------------------------------------------------------------------
+11.3. WRLinux ZynqMP Security Introduction & Hardware Root Of Trust Secure Boot
+-------------------------------------------------------------------------------
 
-WRL secure boot on ZynqMP platform includes bootloader(BOOT.BIN) based on the
+WRLinux secure boot on ZynqMP platform includes bootloader(BOOT.BIN) based on the
 hardware root of trust secure boot from Xilinx Zynq MPSoC and verifiable fitImage
 with RSA2048 signature.
 
@@ -761,7 +761,7 @@ Secure boot encryption and signature overview chart for zynqmp platform as below
   + system.bit  |               *                                       |
   + bl31.elf    |               *                                       |
   + u-boot.elf  |               *                                       v
-  +------------+                *    			    Finally boot up WRL kernel
+  +------------+                *    			    Finally boot up WRLinux kernel
        ^
        |
 (RSA2048/RSA4096 public key in u-boot,
