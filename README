@@ -89,62 +89,156 @@ patch descriptions use git-whatchanged on the default kernel. For example:
 4. Boot Instructions
 ====================
 
-You must load the DTB (device tree blob) into the target's memory
-prior to booting the kernel Image. The DTB file can be found in the export
-directory after building a project, or you can generate it manually with the
-following commands:
+4.1 Device Trees
+----------------
+A device tree is a hierarchical data structure of named nodes and properties
+used to describe non-discoverable hardware in embedded systems, allowing
+the Linux kernel to support various configurations without hardcoding. It
+is written in text-based Device Tree Source (.dts) files, compiled into
+Device Tree Blob (.dtb) format, and passed to the operating system by the
+bootloader at runtime.
 
-	# bitbake -c devshell virtual/kernel
-	# vim arch/arm64/boot/dts/xilinx/the_file_you_edit*.dts
-	# make xilinx/zynqmp-zcu102-rev1.0.dtb
+The ZynqMP boards are required to use the dtb files to boot Linux kernel.
+In this BSP, there are two types of device trees: kernel device tree and
+system device tree. They satisfy different development needs.
 
-The resulting DTB file can be found here:
-path_to_project/build/tmp/work/<bsp name>-wrs-linux/linux-yocto/<kernel version>/linux-<bsp name>-<kernel type>-build/arch/arm64/boot/dts/xilinx/
+4.1.1 Kernel Device Tree
+------------------------
+The kernel device tree files describe the hardware components of the ZynqMP
+boards, excluding the programming logic (PL). They provide the necessary
+information for Linux to understand and interact with the hardware, enabling
+the Linux kernel to load appropriate drivers and manage resources.
 
-Assuming all files can be downloaded from a network, deploy your board and host
-properly to ensure your network is available from the board.
+The kernel device tree source files are located in
+	<PROJECT_DIR>/build/tmp/work-shared/amd-zynqmp/kernel-source/arch/arm64/boot/dts/xilinx
 
-4.1 Boot from SD card
----------------------
+The following device tree files will be installed to the WIC image along
+with the kernel Image:
+	zynqmp-zcu102-rev1.0.dtb
 
-4.1.1 Deploy kernel, DTB image and file system image into your SD card
-----------------------------------------------------------------------
+Note: These device tree files are only used in prebuilt firmware flow for
+their less device nodes.
 
-Refer to the bootloader/README for information on how to make an SD
-bootable card. Deploy the kernel image, DTB image and file system image as follows:
+4.1.2 System Device Tree
+------------------------
+A system device tree comprehensively represents the entire system's
+hardware configuration. It encompasses not only the components relevant
+to the Linux operating system but also other elements that might be part
+of a multi-domain software system. The system device tree provides a
+holistic view of the hardware setup, facilitating communication and
+coordination across different software domains.
 
-	# mount /dev/mmcblk0p2 /mnt/sd
-	# tar xfj wrlinux-image-std-amd-zynqmp.tar.bz2 --numeric-owner -C /mnt/sd
-	# umount /mnt/sd
-	# mount /dev/mmcblk0p1 /mnt/sd
-	# cp path_to_Image /mnt/sd/boot
-	# cp path_to_zynqmp-zcu102-rev1.0.dtb /mnt/sd/boot
-	# umount /mnt/sd
+The process of generating a system device tree is described in the section
+"7.1.4.3 SDTGen", and it contains the following files:
 
-4.2.2 Set the u-boot environment variables and boot from SD card
-----------------------------------------------------------------
+	- Files that are static for a given device family:
+		- soc.dtsi: A SOC specific file containing information about the CPU.
+		- board.dtsi: A board file copied from AMD's prebuilt board repository.
+		- clk.dtsi: Clock information for the device.
+	- Files dynamically generated based on Vivado Design Suite output:
+		- pl.dtsi: Contains Programmable Logic(soft IPs) information.
+		- system-top.dts: System information about memory, CPU clusters, aliases etc.
+		- pcw.dtsi: Information about the configuration of the processing system from
+		  the Vivado Design Suite peripheral configuration wizard.
 
-Run the following command to load the kernel image and DTB image:
+These files will eventually be compiled into one dtb file "system.dtb".
+This system.dtb will have more nodes and more properties inside each node
+compared to the kernel dtb files mentioned in the section "4.1.1 Kernel
+Device Tree".
 
-	=> setenv bootargs console=ttyPS0,115200 root=/dev/mmcblk0p2 rw rootwait earlycon=cdns,mmio,0xFF000000 clk_ignore_unused
-	=> mmc rescan
-	=> fatload mmc 0 0x10000000 Image
-	=> fatload mmc 0 0x13800000 zynqmp-zcu102-rev1.0.dtb
-	=> booti 0x10000000 - 0x13800000
+Note: Unless you are working in the prebuilt firmware flow mentioned in
+the section "7.1.2 Prebuilt Firmware", system.dtb is the only dtb file
+that you should use to boot Linux.
 
-4.2 NFS boot
-------------
+4.2 Boot Mode
+-------------
+The ZynqMP boards support three boot modes: SD card, QSPI and JTAG.
 
-4.2.1 Setup configuration your NFS TFTP server, and deploy the rootfs tarball
------------------------------------------------------------------------------
+4.2.1 SD Boot Mode
+------------------
+First refer to the section "7.1 BOOT.BIN" to build a bootable WIC image and
+burn it to SD card at host-pc:
 
-	# sudo tar jxf wrlinux-image-std-sato-amd-zynqmp.tar.bz2 -C path_to_rootfs
+   (build-host)$ sudo dd if=wrlinux-image-<rootfs_type>-amd-zynqmp.rootfs.wic of=/dev/sdaX
 
-4.2.2 Set the u-boot environment variables and boot from NFS
-------------------------------------------------------------
+Plug the SD card into the ZCU102 board SD socket and set the DIP switch SW6
+setting like:
 
-	=> setenv bootargs console=ttyPS0,115200 earlycon=cdns,mmio,0xFF000000 clk_ignore_unused root=/dev/nfs rw nfsroot=serverip:path_root_rootfs ip=dhcp
-	=> tftpboot 0x10000000 Image; tftpboot 0x13800000 dtb; booti 0x10000000 - 0x13800000
+   SW6[4]  SW6[3]  SW6[2]  SW6[1]
+   OFF     OFF     OFF     ON
+
+Power on the ZCU102 board or press the POR button SW2.
+
+4.2.2 QSPI Boot Mode
+--------------------
+First we boot the board with SD Card by following the steps in the section
+"4.2.1 SD Boot Mode". At the U-Boot stage, when the message "Hit any key to
+stop autoboot:" appears, hit any key, then run the following commands to
+burn the image to the QSPI flash:
+
+   (u-boot)> sf probe 0 0 0
+   (u-boot)> sf erase 0x0 0x4000000
+   (u-boot)> fatls mmc 0:1
+   (u-boot)> fatload mmc 0:1 0x70000000 BOOT.bin
+   (u-boot)> sf write 0x70000000 0x0 <BOOT.BIN_filesize_in_hex>
+
+Note: The "<BOOT.BIN_filesize_in_hex>" is a hexadecimal value of the size
+of BOOT.BIN.
+
+After flashing the images, turn off the power switch on the board, and
+change the SW6 boot mode pin settings to QSPI boot mode:
+
+   SW6[4]  SW6[3]  SW6[2]  SW6[1]
+   ON      ON      OFF     ON
+
+Power cycle the board. The board now boots up using the BOOT.BIN in the
+QSPI flash.
+
+4.2.3 JTAG Boot Mode
+--------------------
+The JTAG boot mainly communicates with XSDB and it is out of the scope of
+this README. Please refer to the document Zynq UltraScale+ Device Technical
+Reference Manual(UG1085).
+
+4.3 Boot Linux From U-Boot
+--------------------------
+This section provides examples of how to set up U-Boot to boot Linux via
+network or SD Card.
+
+4.3.1 Network
+-------------
+First, you need a host machine with the network servers TFTP and NFS
+correctly installed and configured.
+
+Then find the compressed archive rootfs file at:
+	<PROJECT_DIR>/build/tmp/deploy/images/amd-zynqmp/wrlinux-image-<rootfs_type>-amd-zynqmp.rootfs.tar.bz2
+
+Extract this file to <nfsroot_path>:
+   (build-host)$ sudo tar jxf wrlinux-image-<rootfs_type>-amd-zynqmp.rootfs.tar.bz2 -C <nfsroot_path>
+
+Copy the kernel and dtb file to <tftpserver_path>:
+   (build-host)$ cp Image <tftpserver_path>
+   (build-host)$ cp system.dtb <tftpserver_path>
+
+Set the U-Boot environment variables and boot:
+   (u-boot)> setenv serverip <tftpserver_ip>; setenv ipaddr <board_ip>
+   (u-boot)> setenv bootargs console=ttyPS0,115200 earlycon=cdns,mmio,0xFF000000 clk_ignore_unused root=/dev/nfs rw nfsroot=$serverip:<nfsroot_path> ip=dhcp
+   (u-boot)> tftpboot 0x10000000 Image; tftpboot 0x18800000 system.dtb; booti 0x10000000 - 0x18800000
+
+4.3.2 SD Card
+-------------
+When the WIC image is built in the meta-amd-adaptive-socs-bsp or SDT flow,
+the U-Boot boot script boot.scr is installed. It contains U-Boot commands
+to boot Linux from SD Card automatically. There is no need to reconfigure
+U-Boot.
+
+If the WIC image is built in the prebuilt firmware flow, execute the
+following commands to set the U-Boot environment variables and boot:
+   (u-boot)> setenv bootfile Image; setenv fdtfile zynqmp-zcu102-rev1.0.dtb; setenv loadaddr 0x10000000; setenv fdtaddr 0x18800000;
+   (u-boot)> setenv bootargs 'console=ttyPS0,115200 root=/dev/mmcblk0p2 rw rootwait earlycon=cdns,mmio,0xFF000000 clk_ignore_unused'
+   (u-boot)> setenv bootcmd 'fatload mmc 0:1 $loadaddr $bootfile; fatload mmc 0:1 $fdtaddr $fdtfile; booti $loadaddr - $fdtaddr';
+   (u-boot)> saveenv; run bootcmd;
+
 
 5. WIC Notes
 ============
@@ -162,34 +256,13 @@ tmp/deploy/images/<bsp name>/, such as:
 
 	<path_to_your_project>/tmp/deploy/images/amd-zynqmp/wrlinux-image-<rootfs_type>-amd-zynqmp.rootfs.wic
 
-NOTE: The WIC image built in WRLinux don't contain the bootloader BOOT.BIN
-by default. Please refer to section 6 for the detailed description to create
-a bootable WIC image.
+NOTE: The WIC image built in WRLinux does not contain the bootloader BOOT.BIN
+by default. Please refer to the section "7.1 BOOT.BIN" for the detailed
+description about how to create a bootable WIC image.
 
-5.1 Burn images to SD card
---------------------------
+To burn WIC image to SD card, users only need to execute the below command:
 
-To burn WIC image to SD card, user only need to execute the below command:
-
-	# dd if=wrlinux-image-<rootfs_type>-amd-zynqmp.rootfs.wic of=/dev/your_sd_dev
-
-5.2 Boot the board from the WIC SD card
----------------------------------------
-
-Insert the SD card into the board and power on, then set the proper u-boot
-environment parameters to boot the board, please refer to section 4 for more
-information.
-
-Board can boot automatically by set the below uboot environment variables:
-
-=> setenv bootfile Image; setenv fdtfile zynqmp-zcu102-rev1.0.dtb; setenv loadaddr 0x10000000; setenv fdtaddr 0x13800000;
-
-=> setenv bootargs 'root=/dev/mmcblk0p2 rw rootdelay=5 console=ttyPS0,115200n8'
-
-=> setenv bootcmd 'fatload mmc 0:1 $loadaddr $bootfile; fatload mmc 0:1 $fdtaddr $fdtfile; booti $loadaddr - $fdtaddr';
-
-=> saveenv; run bootcmd;
-
+	(build-host)$ sudo dd if=wrlinux-image-<rootfs_type>-amd-zynqmp.rootfs.wic of=/dev/your_sd_dev
 
 6. Common Features
 ==================
