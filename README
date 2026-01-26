@@ -14,8 +14,10 @@ This layer depends on the following layers supplied with Wind River Linux:
 	meta-xilinx/meta-xilinx-bsp
 	meta-xilinx/meta-xilinx-core
 	meta-xilinx/meta-xilinx-standalone
+	meta-xilinx/meta-xilinx-standalone-sdt
+	meta-xilinx/meta-microblaze
 	meta-arm/meta-arm
-	meta-xilinx-tools
+	meta-amd-adaptive-socs/meta-amd-adaptive-socs-bsp
 
 
 Maintenance
@@ -188,165 +190,29 @@ Board can boot automatically by set the below uboot environment variables:
 
 => saveenv; run bootcmd;
 
-6. Bootloader
-=============
 
-BOOT.BIN is the bootloader for ZCU102 board. There are two ways to generate BOOT.BIN.
-
-6.1 Generate BOOT.BIN with prebuilt firmwares
----------------------------------------------
-
-Run the following steps to generate BOOT.BIN
-
-	$ git clone https://github.com/Xilinx/soc-prebuilt-firmware.git
-	$ cd soc-prebuilt-firmware
-	$ git checkout xlnx_rel_v2025.1
-	$ cd zcu102-zynqmp
-	$ source <path_to_Vivado>/2025.1/settings64.sh
-	$ bootgen -arch zynqmp -image bootgen.bif -o ./BOOT.BIN -w
-
-And the BOOT.BIN can be installed into the WIC image:
-
-	$ cd path_of_project
-	$ . ./environment-setup-x86_64-wrlinuxsdk-linux
-    $ . ./oe-init-build-env
-    $ cat << _EOF >> conf/local.conf
-IMAGE_BOOT_FILES:append = " /< path_to_BOOT.BIN >/BOOT.BIN;BOOT.BIN"
-_EOF
-    $ bitbake wrlinux-image-std
-
-6.2 Build BOOT.BIN in WRLinux
------------------------------
-Besides the above method which uses prebuilt firmwares to generate BOOT.BIN,
-WRLinux can build BOOT.BIN and create a bootable WIC image by using the default
-xsa file or an extra xsa file.
-
-6.2.1 Build a default BOOT.BIN
-------------------------------
-This chapter describes how to generate a BOOT.BIN by using the default xsa
-file which is provided by AMD.
-
-	$ cd path_of_project
-	$ . ./environment-setup-x86_64-wrlinuxsdk-linux
-	$ . ./oe-init-build-env
-	$ cat << _EOF >> conf/local.conf
-CUSTOMER_RECIPES:xilinx += 'bootgen'
-CUSTOMER_RECIPES:xilinx += 'u-boot-xlnx'
-CUSTOMER_RECIPES:xilinx += 'u-boot-tools-xlnx'
-PREFERRED_PROVIDER_u-boot-tools-native = "u-boot-tools-xlnx-native"
-CUSTOMER_RECIPES:xilinx += 'u-boot-xlnx-scr'
-CUSTOMER_RECIPES:xilinx += 'xilinx-bootbin'
-CUSTOMER_RECIPES:xilinx += 'fsbl'
-CUSTOMER_RECIPES:xilinx += 'arm-trusted-firmware'
-CUSTOMER_RECIPES:xilinx += 'pmufw'
-CUSTOMER_RECIPES:xilinx += 'device-tree'
-CUSTOMER_RECIPES:xilinx += 'trusted-firmware-a'
-CUSTOMER_RECIPES:xilinx += 'u-boot-xlnx-uenv'
-CUSTOMER_RECIPES:xilinx-tools += 'bitstream-extraction'
-CUSTOMER_RECIPES:xilinx-tools += 'external-hdf'
-CUSTOMER_RECIPES:xilinx-tools += 'xsct'
-CUSTOMER_RECIPES:xilinx-standalone += 'pmu-firmware'
-CUSTOMER_RECIPES:xilinx-standalone += 'fsbl-firmware'
-CUSTOMER_RECIPES:xilinx-standalone += 'embeddedsw-source'
-MACHINE_FEATURES:amd-zynqmp += " xilinx-bootbin"
-WRL_ZYNQMP_BOOTBIN_TARGET = 'zcu102'
-BB_NO_NETWORK = '0'
-_EOF
-	$ bitbake wrlinux-image-std
-
-After building project, BOOT.BIN can be found at:
-
-	<path_to_your_project>/tmp/deploy/images/amd-zynqmp/boot.bin
-
-And it has been installed to the WIC image:
-
-	<path_to_your_project>/tmp/deploy/images/amd-zynqmp/wrlinux-image-<rootfs_type>-amd-zynqmp.wic
-
-NOTE:
-1. the BOOT.BIN generated with the prebuilt firmwares is different to
-the one built in WRLinux because WRLinux keeps updating the versions of
-firmwares.
-2. multilib is NOT supported for BOOT.BIN.
-
-6.2.2 Build BOOT.BIN with extra xsa
------------------------------------
-In some cases, customers export a xsa file from their Vivado project.
-The BOOT.BIN can be generated with this xsa file in WRLinux, rather
-than using Vitis. Below are the steps for generating this type of BOOT.BIN:
-
-	$ cd path_of_project
-	$ . ./environment-setup-x86_64-wrlinuxsdk-linux
-	$ . ./oe-init-build-env
-	$ cat << _EOF >> conf/local.conf
-CUSTOMER_RECIPES:xilinx += 'bootgen'
-CUSTOMER_RECIPES:xilinx += 'u-boot-xlnx'
-CUSTOMER_RECIPES:xilinx += 'u-boot-tools-xlnx'
-PREFERRED_PROVIDER_u-boot-tools-native = "u-boot-tools-xlnx-native"
-CUSTOMER_RECIPES:xilinx += 'u-boot-xlnx-scr'
-CUSTOMER_RECIPES:xilinx += 'xilinx-bootbin'
-CUSTOMER_RECIPES:xilinx += 'fsbl'
-CUSTOMER_RECIPES:xilinx += 'arm-trusted-firmware'
-CUSTOMER_RECIPES:xilinx += 'pmufw'
-CUSTOMER_RECIPES:xilinx += 'device-tree'
-CUSTOMER_RECIPES:xilinx += 'trusted-firmware-a'
-CUSTOMER_RECIPES:xilinx += 'u-boot-xlnx-uenv'
-CUSTOMER_RECIPES:xilinx-tools += 'bitstream-extraction'
-CUSTOMER_RECIPES:xilinx-tools += 'external-hdf'
-CUSTOMER_RECIPES:xilinx-tools += 'xsct'
-CUSTOMER_RECIPES:xilinx-standalone += 'pmu-firmware'
-CUSTOMER_RECIPES:xilinx-standalone += 'fsbl-firmware'
-MACHINE_FEATURES:amd-zynqmp += " xilinx-bootbin"
-WRL_ZYNQMP_BOOTBIN_TARGET = 'zcu102'
-BB_NO_NETWORK = '0'
-HDF_NAME = "<path_to_xsa>/<xsa_file>.xsa"
-_EOF
-	$ bitbake wrlinux-image-std
-
-After building project, BOOT.BIN can be found at:
-
-	<path_to_your_project>/tmp/deploy/images/amd-zynqmp/boot.bin
-
-The dtb file can be found at:
-
-	<path_to_your_project>/tmp/deploy/images/amd-zynqmp/system.dtb
-
-BOOT.BIN and system.dtb have been installed to the WIC image:
-
-	<path_to_your_project>/tmp/deploy/images/amd-zynqmp/wrlinux-image-<rootfs_type>-amd-zynqmp.wic
-
-NOTE:
-1. The xsa file MUST include the bitstream file when exported in Vivado. This
-   means that when using "Files->Export->Export Hardware" in Vivado to export
-   a xsa file, the option "Include bitstream" MUST be selected.
-2. When booting Linux in u-boot, the dtb file should be set to system.dtb because
-   this dtb file contains the device nodes for PL devices in bitstream file.
-3. The system.dtb is generated with pl.dtsi and zynqmp.dtsi which comes from
-	https://github.com/Xilinx/device-tree-xlnx.git
-   This dtsi file is different to the one in wrlinux kernel source.
-
-7. kexec and kdump
+6. Common Features
 ==================
 
+6.1 kexec and kdump
+-------------------
 You need to add feature/kexec support as follow:
 	./wrlinux-x/setup.sh --machines amd-zynqmp --templates feature/kexec,feature/kdump
 
-7.1 kexec
----------
+6.1.1 kexec
+-----------
 
 	kexec -l  /boot/Image --append="`cat /proc/cmdline`"
 	kexec -e
 
-7.2 kdump
----------
+6.1.2 kdump
+-----------
 
 Add crashkernel=512M to the kernel cmdline
    kexec -p /boot/Image --append="$your-bootcmd"
    echo c > /proc/sysrq-trigger
 
-8. Features
-===========
-
-8.1 CAN
+6.2 CAN
 -------
 
 # configure can0 in the speed of 800000
@@ -360,13 +226,13 @@ Add crashkernel=512M to the kernel cmdline
 NOTE: The 3-4 and 5-6 pins of J98 should be connected by jumpers to install 120ohm
 between CAN_H and CAN_L.
 
-8.2 DisplayPort
+6.3 DisplayPort
 ---------------
 
 According to the vendor, only some monitors in the following link are supported:
   https://www.xilinx.com/support/answers/68671.html
 
-8.2.1 DP Display
+6.3.1 DP Display
 ----------------
 
 Show and adjust screen resolution, some draw examples
@@ -384,14 +250,14 @@ Show and adjust screen resolution, some draw examples
       720x400       70.08
    root@amd-zynqmp:~# xrandr -s 1920x1080
 
-8.2.2 DP Audio
+6.3.2 DP Audio
 --------------
 
 Connect loudspeaker or headset with display monitor, and then run below commands:
 	# aplay -l
 	# speaker-test -c2 -twav
 
-8.3 suspend/resume
+6.4 suspend/resume
 ------------------
 
 "Suspend-To-RAM" is supported by running below command:
@@ -404,7 +270,7 @@ Run below command before entering suspend status.
 	# echo enabled > /sys/class/tty/ttyPS0/power/wakeup
 And then, press Enter key in console window.
 
-8.4 System Monitor
+6.5 System Monitor
 ------------------
 
 System monitor includes PL monitor and PS monitor.
@@ -414,27 +280,27 @@ to other parts of the system including the PMU, RPU, and APU processors.
 Customer could check the detail system monitor interfaces with below command:
 	# ls -la /sys/bus/iio/devices/iio:device0
 
-8.5 CANFD
+6.6 CANFD
 ---------
 
 Based on CANFD FPGA LogiCORE IP from Xilinx, there are 2 canfd devices on FPGA side.
 An example is provided to verify can/canfd driver with the ZCU102 board and
 FMC extend board(https://www.xilinx.com/products/boards-and-kits/1-12nths4.html).
 
-8.5.1 Generate xsa file
+6.6.1 Generate xsa file
 -----------------------
 Customers generate xsa file which contains the CANFD FPGA implementation from Vivado.
 Then execute the commands in the chapter 6.2.2 to generate BOOT.BIN and system.dtb,
 deploy them to ZCU102 board.
 
-8.5.2 Boot up system
+6.6.2 Boot up system
 --------------------
 
 	# fatload mmc 0 0x13000000 system.dtb
 	or
 	# tftpboot 0x13000000 <tftp server>/system.dtb
 
-8.5.3 Verify CANFD
+6.6.3 Verify CANFD
 ------------------
 
 	Detailed verification commands as below:
@@ -457,7 +323,7 @@ NOTE: The Xilinx official BOOT.BIN release doesn't contain the FPGA implementati
 CANFD, please connect with Xilinx to get professional technical support about how to
 design CANFD on FPGA side.
 
-8.6 USB
+6.7 USB
 -------
 
 The USB interface on the PS-side serves multiple roles as a host, device, and OTG
@@ -468,13 +334,13 @@ in the following link:
 
 And the USB Jumper Settings on the ZCU102 board are described below.
 
-8.6.1 USB Host
+6.7.1 USB Host
 --------------
 
     J109    J110    J112    J113    J7
     2-3     2-3     1-2     1-2     ON
 
-8.6.2 USB Device
+6.7.2 USB Device
 ----------------
 
     J109    J110    J112    J113    J7
@@ -487,7 +353,7 @@ by using "fdt" u-boot command. The example for USB device mode is as described b
 	=> fdt addr 0x13800000; fdt resize; fdt set /axi/usb@ff9d0000/usb@fe200000 dr_mode peripheral
 	=> booti 0x10000000 - 0x13800000
 
-8.6.3 USB OTG
+6.7.3 USB OTG
 -------------
 
     J109    J110    J112    J113    J7
@@ -505,7 +371,7 @@ the vendor, the following link is their answer:
   https://support.xilinx.com/s/question/0D52E00006hpgaGSAQ/otg-in-zcu102-with-rev-1-0-doesnt-work-on-the-latest-sdk-v20174
 2. USB OTG mode requires that the kernel option CONFIG_USB_DWC3_OTG is enabled.
 
-8.7 PCIe
+6.8 PCIe
 --------
 
 Only some limited PCIe devices were supported based on the SDK v2025.01 and the
@@ -513,7 +379,7 @@ following link:
 
   https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18842417/Linux+ZynqMP+PS-PCIe+Root+Port+Driver
 
-8.8 GPU
+6.9 GPU
 -------
 
 3D-graphics apps call Mali-libs API(libmali-xlnx) to drive the Mali400 GPU
@@ -547,15 +413,15 @@ PREFERRED_PROVIDER_virtual/egl:amd-zynqmp = "libmali-xlnx"
 CUSTOMER_RECIPES:xilinx-mali400 += "libmali-xlnx"
 CUSTOMER_RECIPES:xilinx-mali400 += "kernel-module-mali"
 LICENSE_FLAGS_ACCEPTED += "xilinx"
-MACHINE_FEATURES:amd-zynqmp += " mali400"
+MACHINE_FEATURES:append = " mali400"
 DISTRO_FEATURES:append = " libmali"
 _EOF
      $ bitbake wrlinux-image-std-sato
 
 NOTE: multilib is NOT supported for mali400 feature.
 
-8.9 SATA
---------
+6.10 SATA
+---------
 
 When your SATA hard disk data is corrupted, the system might report a hard link
 reset, then try the following command:
@@ -566,6 +432,392 @@ reset, then try the following command:
        ata2: EH complete
 
 And mkfs a new filesystem on your hard disk partition.
+
+
+7. Xilinx Specific Features
+===========================
+
+7.1 BOOT.BIN
+------------
+This section describes how to generate BOOT.BIN and a WIC image containing
+BOOT.BIN.
+
+7.1.1 Introduction
+------------------
+The AMD SoCs typically have multiple hardware and software binaries used
+to boot them to function as designed and expected. These binaries may
+include FPGA bitstreams, firmware images, bootloaders, operating systems,
+and user-chosen applications. BOOT.BIN is a boot image that stitches these
+binary files together.
+
+The following figure shows the components that are included in BOOT.BIN
+for Zynq UltraScale+ MPSoC.
+
+	BOOT.BIN
+	├── Boot Header
+	├── FSBL
+	├── PMU Firmware (optional)
+	├── Bitstream (optional)
+	├── ATF (ARM Trusted Firmware)
+	└── Application Images
+	    └── U-Boot (Secondary bootloader)
+
+			Figure 1 BOOT.BIN structure
+
+There are three flows to generate BOOT.BIN and a bootable WIC image, each
+flow is suitable for a specific development task:
+
+	- Prebuilt firmware: In this flow, all components of BOOT.BIN are
+	  prebuilt. It is for the users who focus on the Linux kernel and
+	  userspace development. Refer to the section "7.1.2 Prebuilt Firmware"
+	  for the detailed description.
+
+	- Meta-amd-adaptive-socs-bsp: In this flow, some components (including
+	  Bitstream, etc) of BOOT.BIN are prebuilt. They are downloaded by the
+	  layer meta-amd-adaptive-socs-bsp. The other components (including PSM,
+	  PLM, ATF, U-Boot) are built in WRLinux with the metadata provided by
+	  the layer meta-amd-adaptive-socs-bsp. It is for the users who have the
+	  requirement to reconfigure and build these components. Refer to the
+	  section "7.1.3 Meta-amd-adaptive-socs-bsp" for the detailed description.
+
+	- SDT flow: If users have their own Vivado designs (including PL or PCW),
+	  this flow is the only option. In this flow, all hardware information and
+	  metadata are extracted from the Xilinx Support Archive (XSA) files.
+	  Refer to the section "7.1.4 SDT flow" for the detailed description.
+
+7.1.2 Prebuilt Firmware
+-----------------------
+The git repository soc-prebuilt-firmware contains the boot asset files
+required to rebuild BOOT.BIN for each target board along with a top level
+Makefile and simple build targets.
+
+The prebuilt firmware flow is shown below:
+
+     +--------------------------+   +--------+
+     |soc-prebuilt-firmware repo|-->|BOOT.BIN|---+
+     +--------------------------+   +--------+   |    +---------+
+                   +-------------------------+   |--->|WIC image|
+       +-------+   |Image                    |   |    +---------+
+       |WRLinux|-->|zynqmp-zcu102-rev1.0.dtb |   |
+       +-------+   |rootfs.tar.bz2           |---+
+                   +-------------------------+
+
+			Figure 2 Prebuilt Firmware Flow
+
+Use the following commands to build BOOT.BIN for the ZCU102 board:
+
+	(build-host)$ git clone https://github.com/Xilinx/soc-prebuilt-firmware.git
+	(build-host)$ cd soc-prebuilt-firmware
+	(build-host)$ git checkout xlnx_rel_v2025.2
+	(build-host)$ make bootgen_version=xlnx_rel_v2025.2 board=zcu102-zynqmp arch=zynqmp
+	(build-host)$ ls zcu102-zynqmp/BOOT.BIN
+
+The generated BOOT.BIN can be installed to either SD Card or QSPI. You can
+refer to the sections "4.2.1 SD Boot Mode" and "4.2.2 QSPI Boot Mode" for
+the detailed steps.
+
+Alternatively, you can generate a WIC image with the BOOT.BIN installed by
+executing the following steps:
+
+	(build-host)$ cd <PROJECT_DIR>; . ./environment-setup-x86_64-wrlinuxsdk-linux; . ./oe-init-build-env
+	(build-host)$ cat << _EOF >> conf/local.conf
+IMAGE_BOOT_FILES:append = " /< path_to_BOOT.BIN >/BOOT.BIN;BOOT.BIN"
+_EOF
+	(build-host)$ bitbake wrlinux-image-std
+
+Then, you can refer to the section "5. WIC Notes" to flash this WIC image
+to SD card.
+
+7.1.3 Meta-amd-adaptive-socs-bsp
+--------------------------------
+The meta-amd-adaptive-socs-bsp layer contains the AMD Adaptive SoCs' bsp
+features. It provides machine configurations files, multiconfig files,
+system device tree files, pl firmwares, kernel configuration fragments etc.
+
+WRLinux uses the metadata of meta-amd-adaptive-socs-bsp and the recipes
+of meta-xilinx to build all the required components, to generate the BIF
+file and to call bootgen to create the boot image BOOT.BIN.
+
+The following is the meta-amd-adaptive-socs-bsp flow diagram:
+
+    +--------------------------+   +------------------------+       +----------+
+    |meta-amd-adaptive-socs-bsp|-->|Yocto machine conf files|---+   |BOOT.BIN  |
+    +--------------------------+   +------------------------+   |   |system.dtb|
+                     +--------------------------------------+   |-->|boot.scr  |--+
+                     |meta-xilinx/meta-xilinx-standalone    |   |   +----------+  |   +---------+
+                     |meta-xilinx/meta-xilinx-standalone-sdt|---+                 |-->|WIC image|
+                     |meta-xilinx/meta-xilinx-core          |                     |   +---------+
+                     |meta-xilinx/meta-microblaze           |                     |
+                     +--------------------------------------+   +--------------+  |
+                                                    +-------+   |Image         |  |
+                                                    |WRLinux|-->|rootfs.tar.bz2|--+
+                                                    +-------+   +--------------+
+
+						Figure 3 Meta-amd-adaptive-socs-bsp Flow
+
+Use the following commands to build BOOT.BIN for the VCK190 board:
+
+	(build-host)$ cd <PROJECT_DIR>; . ./environment-setup-x86_64-wrlinuxsdk-linux; . ./oe-init-build-env
+	(build-host)$ cat << _EOF >> conf/local.conf
+BB_NO_NETWORK = '0'
+DISTRO_FEATURES:append = " xilinx-bootloader"
+CUSTOMER_RECIPES:xilinx += 'bootgen'
+CUSTOMER_RECIPES:xilinx += 'u-boot-xlnx'
+CUSTOMER_RECIPES:xilinx += 'u-boot-xlnx-scr'
+CUSTOMER_RECIPES:xilinx += 'u-boot-tools-xlnx'
+CUSTOMER_RECIPES:xilinx += 'u-boot-xlnx-uenv'
+CUSTOMER_RECIPES:xilinx += 'xilinx-bootbin'
+CUSTOMER_RECIPES:xilinx += 'fsbl'
+CUSTOMER_RECIPES:xilinx += 'pmufw'
+CUSTOMER_RECIPES:xilinx += 'bitstream'
+CUSTOMER_RECIPES:xilinx += 'trusted-firmware-a'
+CUSTOMER_RECIPES:xilinx += 'device-tree'
+CUSTOMER_RECIPES:xilinx += 'python3-anytree'
+CUSTOMER_RECIPES:virtualization-layer += 'lopper'
+CUSTOMER_RECIPES:meta-python += 'python3-humanfriendly'
+CUSTOMER_RECIPES:xilinx-standalone += 'pmu-firmware'
+CUSTOMER_RECIPES:xilinx-standalone += 'fsbl-firmware'
+CUSTOMER_RECIPES:xilinx-standalone += 'embeddedsw-source'
+CUSTOMER_RECIPES:xilinx-standalone-sdt += 'sdt-artifacts aiefal aienginev2 audio-formatter avbuf axicdma axicdma-example axidma axidma-example axiethernet axiethernet-example axipcie axipmon axipmon-example axis-switch axivdma axivdma-example bram bram-example can can-example canfd canfd-example canps canps-example cframe cfupmc clk-wiz clk-wiz-example clockps clockps-example common coresightps-dcc csi csi2tx csi2txss csudma csudma-example dcsub ddrcpsu devcfg devcfg-example dfeccf dfeccf-example dfeequ dfeequ-example dfemix dfemix-example dfeofdm dfeofdm-example dfeprach dfeprach-example dfxasm dfxasm-example dmaps dmaps-example dp12 dp12rxss dp12txss dp14 dp14rxss dp14txss dp21 dp21rxss dp21txss dpdma dphy dppsu dsi dsi2rx dsirxss dsitxss dual-splitter emaclite emaclite-example emacps emacps-example emc gpio gpio-example gpiops gpiops-example hdcp1x hdcp22-cipher hdcp22-cipher-dp hdcp22-common hdcp22-mmult hdcp22-rng hdcp22-rx hdcp22-rx-dp hdcp22-tx hdcp22-tx-dp hwicap i2srx i2stx i3c i3cpsx i3cpsx-example iic iic-example iicps iicps-example intc intc-example iomodule ipipsu ipipsu-example llfifo llfifo-example mbox mboxpsu-exampmcdma mcdma-example mipicsiss mipi-rx-phy mipi-tx-phy mmidp mutex mutex-example nandps nandpsu nandpsu-example ospipsv ospipsv-example pciepsu pciepsu-example prc prd qspips qspips-example qspipsu qspipsu-example resetps resetps-example rfdc rfdc-example rtcpsu rtcpsu-example scugic scugic-example scutimer scuwdt sd-fec sdiaud sdi-common sdps sdps-example spdif spi spips spips-example sysmon sysmon-example sysmonpsu sysmonpsu-example sysmonpsv sysmonpsv-example tft tmrctr tmrctr-example tmr-inject tmr-manager trafgen trafgen-example trngpsv trngpsx ttcps ttcps-example uartlite uartlite-example uartns550 uartns550-example uartps uartps-example uartpsv uartpsv-example ufspsxc usb usb-example usbps usbpsu usbpsu-example v-axi4s-remap v-csc v-deinterlacer v-demosaic v-demosaict v-gamma-lfrmbuf-rd v-frmbuf-rd-example v-frmbuf-wr v-frmbuf-wr-example v-gamma-lut v-gamma-lut-example v-hcresampler v-hdmi-common v-hdmiphy1 v-hdmirx1 v-hdmirx v-hdmirxss1 v-hdmirxss v-hdmitx1 v-hdmitx v-hdmitxss1 v-hdmitxss v-hscaler video-common visp-ss v-letterbox v-mix v-mix-example v-multi-scaler v-multi-scaler-example vphy vprocss vprocss-example v-scenechange v-scenechange-example v-sdirx v-sdirxss v-sditx v-sditxss vtc v-tpg v-vcresampler v-vscaler v-warp-filter v-warp-init wdtps wdtps-example wdttb wdttb-example xadcps xadcps-example xdmapcie xdmapcie-example xxvethernet xxvethernet-example zdma zdma-example libxil lwip xilasu xilcert xilffs xilffs-example xilfpga xilfpga-example xilloader xilmailbox xilmailbox-example xilnvm xilnvm-example xilocp xilpdi xilplmi xilpm xilpm-ng xilpuf xilpuf-example xilrsa xilsecure xilsecure-example xilsem xilskey xilskey-example xilstandalone xiltimer'
+_EOF
+	(build-host)$ bitbake xilinx-bootbin
+
+The BOOT.BIN is located in the following directory:
+
+	<PROJECT_DIR>/build/tmp/deploy/images/amd-zynqmp/boot.bin
+
+The generated BOOT.BIN can be installed to either SD Card or QSPI. You can
+refer to the sections "4.2.1 SD Boot Mode" and "4.2.2 QSPI Boot Mode" for
+the detailed steps.
+
+Alternatively, you can generate a WIC image with the BOOT.BIN installed by
+building wrlinux-image-std instead of xilinx-bootbin:
+
+	(build-host)$ bitbake wrlinux-image-std
+
+Then, you can refer to the section "5. WIC Notes" to flash this WIC image
+to SD card.
+
+7.1.4 SDT Flow
+--------------
+7.1.4.1 Introduction
+--------------------
+The PMU and FSBL firmwares shown in the Figure 1 "BOOT.BIN structure" are
+all embeddedsw components. The legacy methodology of building these
+embeddedsw components takes .xsa as a hand-off file from hardware persona
+and uses mdd, mld and mss files for different software configurations.
+This makes the legacy approach require AMD proprietary tools such as the
+software command-line tool (XSCT) and hardware software interface (HSI).
+Without these proprietary tools, the embeddedsw components cannot be
+compiled with the legacy approach.
+
+The system device tree (SDT) flow aims to avoid such dependencies and
+embrace the open-source industry standards without compromising the
+performance and the functionality. It uses the system device tree, CMAKE
+and a Python-based open source tool named Lopper to organize the required
+Build System.
+
+For a more detailed description about porting embeddedsw to SDT flow, refer to
+	https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/2743468485/Porting+embeddedsw+components+to+system+device+tree+SDT+based+flow
+
+This process can be roughly illustrated with the following diagram:
+
+                 +------------------+
+               +-|Full Bitstream XSA|------------+
+     +------+  | +------------------+            |
+     |Vivado|--+                                 +--+
+     +------+  | +-----------------------------+ |  |
+               +-|Dynamic Function eXchange XSA|-+  |
+                 +-----------------------------+    |
+                        +------------------+        |
+                        |system device tree|<-------+ SDTGen
+                        +------------------+
+                            | gen-machineconf
+                  +------------------------+      +----------+
+                  |Yocto machine conf files|--+   |BOOT.BIN  |
+                  +------------------------+  |   |system.dtb|
+    +--------------------------------------+  |-->|boot.scr  |--+
+    |meta-xilinx/meta-xilinx-standalone    |  |   +----------+  |   +---------+
+    |meta-xilinx/meta-xilinx-standalone-sdt|  |                 |-->|WIC image|
+    |meta-xilinx/meta-xilinx-core          |--+                 |   +---------+
+    |meta-xilinx/meta-microblaze           |                    |
+    +--------------------------------------+  +--------------+  |
+                                   +-------+  |Image         |  |
+                                   |WRLinux|->|rootfs.tar.bz2|--+
+                                   +-------+  +--------------+
+
+						Figure 4 SDT Flow
+
+Topics that apply to this design flow include:
+	- Section 7.1.4.2 Vivado design
+	- Section 7.1.4.3 SDTGen
+	- Section 7.1.4.4 Gen-machineconf
+	- Section 7.1.4.5 SDT Flow in WRLinux
+
+7.1.4.2 Vivado Design
+---------------------
+The SDT flow begins with the XSA files generated by Vivado. According to
+how the programming logic (PL) portion of a XSA file is structured and
+reconfigured, the XSA files can be divided into the following types:
+Full Bitstream design and Dynamic Function eXchange (DFX) design. DFX is
+not currently supported.
+
+7.1.4.3 SDTGen
+--------------
+SDTGen is a tool that implements a Tcl interface to generate system device
+trees for AMD FPGAs using an XSA file as input. It outputs not only
+hardware configuration information in the form of System Device Trees, but
+also binary files containing "firmwares" (initial bootloaders, hardware
+configuration files) for the device.
+
+Ensure that Vivado or Vitis is installed on your build-host before executing
+the following commands to convert an XSA file into a system device tree:
+
+	(build-host)$ source <installed_vivado_path>/settings64.sh
+	(build-host)$ sdtgen -xsa <your_xsa_file> -dir <sdt_outdir> -board_dts zynqmp-zcu102-rev1.1 -debug enable
+
+For a more detailed description of SDTGen, refer to
+	https://github.com/Xilinx/system-device-tree-xlnx/blob/master/README.md
+
+7.1.4.4 gen-machineconf
+-----------------------
+The gen-machineconf is used to extract the necessary information from the
+system device tree, create Yocto machine configurations and isolate the
+Linux device tree from the broader system device tree.
+
+For a more detailed description of gen-machineconf, refer to
+	https://github.com/Xilinx/gen-machine-conf/blob/xlnx_rel_v2025.2/README.md
+
+The gen-machineconf decides how to handle the bitstream file and the PL
+dtsi file when generating BOOT.BIN.
+
+	- Without "-g" option, the bitstream file is integrated into BOOT.BIN
+	  and loaded in the early boot stage, the PL dtsi file will be merged
+	  into system.dtb. After Linux boots up successfully, the PL works. We
+	  consider it as a "without SDT pl overlay" mode.
+
+	- With "-g full" option, the bitstream file and the PL dtsi file will NOT
+	  be handled. You need to follow the instructions in the section
+	  "7.2 Device Tree Overlay" to pack the PL pdi and the PL dtbo into
+	  rootfs, and execute the commands in the section "7.3 PL Programming"
+	  to load the PL firmware with dtbo using the fpgautil command line
+	  utility or configfs. We consider it as a "with SDT pl overlay" mode.
+
+Ensure that the directory <std_outdir> is generated successfully in the
+section "7.1.4.3 SDTGen" before executing the following commands:
+
+	(build-host)$ cd <PROJECT_DIR>; . ./environment-setup-x86_64-wrlinuxsdk-linux; . ./oe-init-build-env
+	(build-host)$ cat << _EOF >> conf/local.conf
+CUSTOMER_RECIPES:openembedded-layer += 'kconfig-frontends'
+CUSTOMER_RECIPES:meta-python += 'python3-humanfriendly'
+CUSTOMER_RECIPES:virtualization-layer += 'lopper'
+CUSTOMER_RECIPES:xilinx += 'python3-anytree'
+CUSTOMER_RECIPES:xilinx += 'xilinx-lops'
+CUSTOMER_RECIPES:xilinx-standalone += 'esw-conf'
+CUSTOMER_RECIPES:xilinx-standalone += 'embeddedsw-source'
+_EOF
+	(build-host)$ export PATH=$PATH:<PROJECT_DIR>/layers/meta-xilinx/gen-machine-conf/
+
+For the "without SDT pl overlay" mode, run the following commands:
+	(build-host)$ gen-machineconf parse-sdt --hw-description <std_outdir> -c conf/ --machine-name <workflow_machine_name> --add-config CONFIG_SUBSYSTEM_MACHINE_NAME=\"zynqmp-zcu102-rev1.1\"
+
+For the "with SDT pl overlay" mode, run the following commands:
+	(build-host)$ gen-machineconf parse-sdt --hw-description <std_outdir> -c conf/ --machine-name <workflow_machine_name> --add-config CONFIG_SUBSYSTEM_MACHINE_NAME=\"zynqmp-zcu102-rev1.1\" -g full
+
+After executing either of the two commands above, the following folders
+and files will be generated under <PROJECT_DIR>/build:
+	conf/machine/<workflow_machine_name>.conf
+	conf/machine/include/<workflow_machine_name>/
+	conf/dts/<workflow_machine_name>/
+	hw-description/<workflow_machine_name>/
+	output/<workflow_machine_name>/
+
+You may observe the output below telling you to set "MACHINE" during
+gen-machineconf:
+
+	# Use the newly generated MACHINE
+	MACHINE = "<workflow_machine_name>"
+
+This output message can be ignored because <workflow_machine_name> will
+be assigned to "WORKFLOW_MACHINE_NAME" in conf/local.conf described in
+the section "7.1.4.5 SDT Flow in WRLinux". The Yocto machine conf files
+generated by gen-machineconf will be treated as an additional machine
+configuration. Assigning it to "MACHINE" can cause the WRLinux BSP
+layer amd-zynqmp to be excluded, resulting in WRLinux build failure.
+
+The <workflow_machine_name> can be any string. For example, the name
+"wrlinux-zcu102" for the "without SDT pl overlay" mode and the name
+"wrlinux-zcu102-full" for the "with SDT pl overlay" mode are available
+names.
+
+For a more detailed description of gen-machineconf in meta-xilinx, see
+	https://github.com/Xilinx/meta-xilinx/blob/rel-v2025.2/meta-xilinx-standalone-sdt/README.sdt.bsp.md
+
+Note: The following names can NOT be used as <workflow_machine_name>
+because they have been occupied by the machine conf files in the layer
+meta-amd-adaptive-socs-bsp.
+	zynqmp-zcu102-sdt-full
+
+7.1.4.5 SDT Flow in WRLinux
+---------------------------
+After running the steps in the section "7.1.4.4 gen-machineconf", run the
+following steps to build a WRLinux image:
+
+	(build-host)$ cat << _EOF >> conf/local.conf
+BB_NO_NETWORK = '0'
+WORKFLOW_MACHINE_NAME = "<workflow_machine_name>"
+DISTRO_FEATURES:append = " xilinx-bootloader"
+CUSTOMER_RECIPES:xilinx += 'bootgen'
+CUSTOMER_RECIPES:xilinx += 'u-boot-xlnx'
+CUSTOMER_RECIPES:xilinx += 'u-boot-xlnx-scr'
+CUSTOMER_RECIPES:xilinx += 'u-boot-tools-xlnx'
+CUSTOMER_RECIPES:xilinx += 'u-boot-xlnx-uenv'
+CUSTOMER_RECIPES:xilinx += 'xilinx-bootbin'
+CUSTOMER_RECIPES:xilinx += 'fsbl'
+CUSTOMER_RECIPES:xilinx += 'pmufw'
+CUSTOMER_RECIPES:xilinx += 'bitstream'
+CUSTOMER_RECIPES:xilinx += 'trusted-firmware-a'
+CUSTOMER_RECIPES:xilinx += 'device-tree'
+CUSTOMER_RECIPES:xilinx-standalone += 'pmu-firmware'
+CUSTOMER_RECIPES:xilinx-standalone += 'fsbl-firmware'
+CUSTOMER_RECIPES:xilinx-standalone-sdt += 'sdt-artifacts aiefal aienginev2 audio-formatter avbuf axicdma axicdma-example axidma axidma-example axiethernet axiethernet-example axipcie axipmon axipmon-example axis-switch axivdma axivdma-example bram bram-example can can-example canfd canfd-example canps canps-example cframe cfupmc clk-wiz clk-wiz-example clockps clockps-example common coresightps-dcc csi csi2tx csi2txss csudma csudma-example dcsub ddrcpsu devcfg devcfg-example dfeccf dfeccf-example dfeequ dfeequ-example dfemix dfemix-example dfeofdm dfeofdm-example dfeprach dfeprach-example dfxasm dfxasm-example dmaps dmaps-example dp12 dp12rxss dp12txss dp14 dp14rxss dp14txss dp21 dp21rxss dp21txss dpdma dphy dppsu dsi dsi2rx dsirxss dsitxss dual-splitter emaclite emaclite-example emacps emacps-example emc gpio gpio-example gpiops gpiops-example hdcp1x hdcp22-cipher hdcp22-cipher-dp hdcp22-common hdcp22-mmult hdcp22-rng hdcp22-rx hdcp22-rx-dp hdcp22-tx hdcp22-tx-dp hwicap i2srx i2stx i3c i3cpsx i3cpsx-example iic iic-example iicps iicps-example intc intc-example iomodule ipipsu ipipsu-example llfifo llfifo-example mbox mboxpsu-exampmcdma mcdma-example mipicsiss mipi-rx-phy mipi-tx-phy mmidp mutex mutex-example nandps nandpsu nandpsu-example ospipsv ospipsv-example pciepsu pciepsu-example prc prd qspips qspips-example qspipsu qspipsu-example resetps resetps-example rfdc rfdc-example rtcpsu rtcpsu-example scugic scugic-example scutimer scuwdt sd-fec sdiaud sdi-common sdps sdps-example spdif spi spips spips-example sysmon sysmon-example sysmonpsu sysmonpsu-example sysmonpsv sysmonpsv-example tft tmrctr tmrctr-example tmr-inject tmr-manager trafgen trafgen-example trngpsv trngpsx ttcps ttcps-example uartlite uartlite-example uartns550 uartns550-example uartps uartps-example uartpsv uartpsv-example ufspsxc usb usb-example usbps usbpsu usbpsu-example v-axi4s-remap v-csc v-deinterlacer v-demosaic v-demosaict v-gamma-lfrmbuf-rd v-frmbuf-rd-example v-frmbuf-wr v-frmbuf-wr-example v-gamma-lut v-gamma-lut-example v-hcresampler v-hdmi-common v-hdmiphy1 v-hdmirx1 v-hdmirx v-hdmirxss1 v-hdmirxss v-hdmitx1 v-hdmitx v-hdmitxss1 v-hdmitxss v-hscaler video-common visp-ss v-letterbox v-mix v-mix-example v-multi-scaler v-multi-scaler-example vphy vprocss vprocss-example v-scenechange v-scenechange-example v-sdirx v-sdirxss v-sditx v-sditxss vtc v-tpg v-vcresampler v-vscaler v-warp-filter v-warp-init wdtps wdtps-example wdttb wdttb-example xadcps xadcps-example xdmapcie xdmapcie-example xxvethernet xxvethernet-example zdma zdma-example libxil lwip xilasu xilcert xilffs xilffs-example xilfpga xilfpga-example xilloader xilmailbox xilmailbox-example xilnvm xilnvm-example xilocp xilpdi xilplmi xilpm xilpm-ng xilpuf xilpuf-example xilrsa xilsecure xilsecure-example xilsem xilskey xilskey-example xilstandalone xiltimer'
+_EOF
+	(build-host)$ bitbake xilinx-bootbin
+
+The BOOT.BIN is located in the following directory:
+
+	<PROJECT_DIR>/build/tmp/deploy/images/amd-zynqmp/boot.bin
+
+The generated BOOT.BIN can be installed to either SD Card or QSPI. You can
+refer to the sections "4.2.1 SD Boot Mode" and "4.2.2 QSPI Boot Mode" for
+the detailed steps.
+
+Alternatively, you can generate a WIC image with the BOOT.BIN installed by
+building wrlinux-image-std instead of xilinx-bootbin:
+
+	(build-host)$ bitbake wrlinux-image-std
+
+Then, you can refer to the section "5. WIC Notes" to flash this WIC image
+to SD card.
+
+Note: Check if you set WORKFLOW_MACHINE_NAME correctly in conf/local.conf
+when encountering the following build error:
+	File "layers/oe-core/bitbake/lib/bb/parse/parse_py/ConfHandler.py", line 97, in include_single_file
+	raise ParseError("Could not %s file %s" % (error_out, fn), parentfn, lineno)
+	bb.parse.ParseError: ParseError at layers/amd-zynqmp/conf/machine/amd-zynqmp-sdt.inc:5: Could not include required file conf/machine/<workflow_machine_name>.conf
+
+7.1.4.6 Rebuild
+---------------
+If you want to run gen-machineconf to create a new <workflow_machine_name>
+based on an existing project, you need to clean the build files by running
+the following commands:
+
+	(build-host)$ rm conf/machine -Rf; rm output -Rf; rm conf/dts -Rf; rm hw-description -Rf
+	(build-host)$ sed -i '/WORKFLOW_MACHINE_NAME/d' conf/local.conf
+
+After re-running the gen-machineconf command, do not forget to reconfigure
+WORKFLOW_MACHINE_NAME in conf/local.conf.
+
 
 9 FPGA Bitstream File Update
 ============================
