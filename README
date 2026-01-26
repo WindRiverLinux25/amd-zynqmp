@@ -891,153 +891,113 @@ the following commands:
 After re-running the gen-machineconf command, do not forget to reconfigure
 WORKFLOW_MACHINE_NAME in conf/local.conf.
 
+7.2 Device Tree Overlay
+-----------------------
+The Device Tree Overlay(DTO) is used to add the child nodes and the fragments
+from the .dtbo file to the base device tree, then triggering drivers to be
+probed after PL programming. So the dtbo file for PL needs to be installed
+to rootfs along with PL firmwares (including Bitstream or PDI).
 
-9 FPGA Bitstream File Update
-============================
+The recipe "zynqmp-fw-demo" in the amd-zynqmp BSP layer is designed to
+generate the dtbo file in WRLinux by utilizing the bbclass "dfx_user_dts".
+For a more detailed description of "dfx_user_dts", please see
+	https://github.com/Xilinx/meta-xilinx/blob/rel-v2025.2/docs/README.dfx.user.dts.md
 
-On amd-zynqmp platform, customer is able to update their own FPGA design image
-from linux side in running time. Here is an example of PL programming from linux
-using the Linux FPGA Manager framework. In this example, we will program a prebuilt
-bitstream file "download.bit" into FPGA.
+After running the steps in the section "7.1.4 SDT Flow", execute the
+following commands:
 
-9.1 Generate Bitstream Binary file
-----------------------------------
-
-Because amd-zynqmp platform only supports binary format for updating FPGA, it is needed
-to change the .bit file into binary format with below commands:
-
-	$ git clone https://github.com/Xilinx/soc-prebuilt-firmware.git
-	$ cd soc-prebuilt-firmware
-	$ git checkout xlnx_rel_v2025.1
-	$ cd zcu102-zynqmp
-	$ source <path_to_Vivado>/2025.1/settings64.sh
-	$ bootgen -image Bitstream.bif -arch zynqmp -o ./system.bit.bin -w
-
-The content of Bitstream.bif is listed as follow:
-
-	all:
-	{
-		[destination_device = pl] download.bit	/* Bitstream file name */
-	}
-
-9.2 Generate Device Tree Overlay (DTO)
---------------------------------------
-
-We create a pl.dtsi file and its contents is listed as follow:
-
-	// pl.dtsi overlay dts file.
-	/dts-v1/;
-	/plugin/;
-
-	/ {
-		fragment@0 {
-			target = <&fpga_full>;
-			__overlay__ {
-				#address-cells = <2>;
-				#size-cells = <2>;
-				firmware-name = "system.bit.bin";
-			};
-		};
-	};
-
-Then we generate Device Tree Overlay Blob (.dtbo) file from
-the pl.dtsi file as below:
-
-	$ dtc -O dtb -o pl.dtbo -b 0 -@ pl.dtsi
-
-Deploy system.bit.bin and pl.dtbo files into rootfs.
-
-9.3 Update FPGA bitstream file
-------------------------------
-
-There are two ways to program the bitstream file:
-	- using Device Tree Overlay
-	- using sysfs interface
-
-9.3.1 Update FPGA by using Device Tree Overlay
-----------------------------------------------
-
-Boot up kernel and login, then run below commands in terminal.
-
-1) Set flags for Full Bitstream.
-	# echo 0 > /sys/class/fpga_manager/fpga0/flags
-
-2) Copy the Full Bitstream (.bin) and pl.dtbo files into firmware folder
-	# mkdir -p /lib/firmware
-	# cp xxx/system.bit.bin /lib/firmware/system.bit.bin
-	# cp xxx/pl.dtbo /lib/firmware/pl.dtbo
-
-3) Apply overlay DTB(pl.dtbo) to add live device nodes
-	# mkdir /sys/kernel/config/device-tree/overlays/system
-	# cd /lib/firmware/
-	# echo pl.dtbo > /sys/kernel/config/device-tree/overlays/system/path
-
-4) Steps to remove device nodes
-	# rmdir /sys/kernel/config/device-tree/overlays/system
-
-9.3.2 Update FPGA by using sysfs interface
-------------------------------------------
-
-Boot up kernel and login, then run below commands in terminal.
-
-	# echo 0 > /sys/class/fpga_manager/fpga0/flags
-	# mkdir -p /lib/firmware
-	# cp xxx/system.bit.bin /lib/firmware/system.bit.bin
-	# cd /lib/firmware
-	# echo system.bit.bin > /sys/class/fpga_manager/fpga0/firmware
-
-9.4 Note
---------
-If customer wants to enable new peripherals that reside in the new FPGA bitstream from linux side,
-overlay solution is able to implement the requirement. Detail description, please refer to below link.
-https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841847/Solution+ZynqMP+PL+Programming#x-Programming+the+PL+through+Linux
-
-
-10 Generate dtb based on XSA
-============================
-Firstly, set BB_NO_NETWORK as '0' in <path_to_project>/build/conf/local.conf file.
-Then following the steps as below to generate the dtb files based on the XSA files:
-
-     $ cd <path_to_project>
-     $ . ./environment-setup-x86_64-wrlinuxsdk-linux
-     $ . ./oe-init-build-env
-     $ cat << _EOF >> conf/local.conf
-CUSTOMER_RECIPES:xilinx += 'device-tree'
-CUSTOMER_RECIPES:xilinx-tools += 'external-hdf'
-CUSTOMER_RECIPES:xilinx-tools += 'xsct'
-HDF_NAME = "<path_to_xsa>/<xsa_file>.xsa"
+	(build-host)$ cd <PROJECT_DIR>; . ./environment-setup-x86_64-wrlinuxsdk-linux; . ./oe-init-build-env
+	(build-host)$ cp conf/dts/<your_workflow_machine_name>/pl-overlay-full/pl.dtsi <PROJECT_DIR>/layers/amd-zynqmp/recipes-firmware/zynqmp-fw-demo/files
+	(build-host)$ cp hw-description/<your_workflow_machine_name>/<path_to_bit>/<proj>.bit <PROJECT_DIR>/layers/amd-zynqmp/recipes-firmware/zynqmp-fw-demo/files
+	(build-host)$ cat << _EOF >> conf/local.conf
+IMAGE_INSTALL:append = " zynqmp-fw-demo"
+CUSTOMER_RECIPES:wr-amd-zynqmp += 'zynqmp-fw-demo'
+FW_DEMO_FILES:pn-zynqmp-fw-demo = "pl.dtsi <proj>.bit"
 _EOF
-     $ bitbake device-tree
+	(build-host)$ bitbake wrlinux-image-std
 
-Once bitbake successfully, you will find the dtb file "system.dtb" in the directory:
-<path_to_project>/build/tmp/deploy/images/amd-zynqmp/system.dtb
+The dtbo and bitstream files can be found at the boards:
+	root@amd-zynqmp:~# ls -l /lib/firmware/xilinx/zynqmp-fw-demo/zynqmp-fw-demo.*
+	-rw-r--r-- 1 root root    3825 Apr  5  2011 /lib/firmware/xilinx/zynqmp-fw-demo/zynqmp-fw-demo.dtbo
+	-rw-r--r-- 1 root root 1423280 Apr  5  2011 /lib/firmware/xilinx/zynqmp-fw-demo/zynqmp-fw-demo.bin
 
-NOTE: Please make sure the version of the xsct tools is in accordance with the version
-of HDF/XSA files, and there may be some unpredictable problems if using the HDF/XSA
-files of older versions.
+These files can be used to program PL by following the instructions in
+the section "7.3 PL Programming".
+
+7.3 PL Programming
+------------------
+There are 3 methods to program PL from the Linux side:
+    - sysfs
+    - configfs
+    - fpgautil
+
+For a more detailed description of PL programming, please see
+	https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841847/Solution+ZynqMP+PL+Programming
+
+7.3.1 Sysfs
+-----------
+Run the following commands to program PL via sysfs:
+
+	root@amd-zynqmp:~# echo 0 > /sys/class/fpga_manager/fpga0/flags
+	root@amd-zynqmp:~# mkdir -p /lib/firmware
+	root@amd-zynqmp:~# cp <path_to_bin/proj.bin> /lib/firmware/
+	root@amd-zynqmp:~# echo proj.bin > /sys/class/fpga_manager/fpga0/firmware
+
+Note: The sysfs method only supports the PL programming without dtbo.
+
+7.3.2 Configfs
+--------------
+Run the following commands to program PL via configfs:
+
+	root@amd-zynqmp:~# echo 0 > /sys/class/fpga_manager/fpga0/flags
+	root@amd-zynqmp:~# mkdir -p /lib/firmware
+	root@amd-zynqmp:~# cp <path_to_bin/proj.bin> /lib/firmware/
+	root@amd-zynqmp:~# cp <path_to_dtbo/pl.dtbo> /lib/firmware/
+	root@amd-zynqmp:~# mkdir /sys/kernel/config/device-tree/overlays/system
+	root@amd-zynqmp:~# cd /lib/firmware/
+	root@amd-zynqmp:~# echo pl.dtbo > /sys/kernel/config/device-tree/overlays/system/path
+
+Steps to remove the drivers that were added as part of DTO
+
+	root@amd-zynqmp:~# rmdir /sys/kernel/config/device-tree/overlays/system
+
+7.3.3 Fpgautil
+--------------
+The fpgautil tool provides a user-friendly interface for loading,
+reconfiguring and reading FPGA bitstream configurations. Follow
+the steps to install this tool on WRLinux:
+
+	(build-host)$ cd <PROJECT_DIR>; . ./environment-setup-x86_64-wrlinuxsdk-linux; . ./oe-init-build-env
+	(build-host)$ cat << _EOF >> conf/local.conf
+CUSTOMER_RECIPES:xilinx += 'fpga-manager-script'
+IMAGE_INSTALL:append = " fpga-manager-script"
+_EOF
+
+Run the following commands to program PL via fpgautil:
+    root@amd-zynqmp:~# fpgautil -b <path_to_bin/proj.bin> -o <path_to_dtbo/pl.dtbo>
 
 
-11 Secure Boot
+8. Secure Boot
 ==============
 
-11.1 Introduction
+8.1 Introduction
 -----------------
 This section provides detail description about how to enable secure
 boot on ZCU102 rev1.0 board. It includes the implementation principles
 of secure boot, implementation example step by step and so on.
 
-11.1.1 Dependency
+8.1.1 Dependency
 -----------------
 Secure boot feature depends on template feature/secure-boot.
 
-11.1.2 Building Secure Boot
+8.1.2 Building Secure Boot
 ---------------------------
 
 	# ./wrlinux-x/setup.sh --machines amd-zynqmp --templates feature/secure-boot
 
 
-11.2. Preparations & Prerequisites
-----------------------------------
+8.2. Preparations & Prerequisites
+---------------------------------
 To use secure boot feature, assume that you are:
  - Experienced with WRLinux embedded software development
  - Experienced with Xilinx development tools such as xSDK.
@@ -1050,8 +1010,8 @@ Hardware preparations:
  - A host machine installed with aarch64 cross-compile toolchain.
  - Xilinx ZynqMP ZCU102 development sets with Silicon version 4.
 
-11.3. WRLinux ZynqMP Security Introduction & Hardware Root Of Trust Secure Boot
--------------------------------------------------------------------------------
+8.3. WRLinux ZynqMP Security Introduction & Hardware Root Of Trust Secure Boot
+------------------------------------------------------------------------------
 
 WRLinux secure boot on ZynqMP platform includes bootloader(BOOT.BIN) based on the
 hardware root of trust secure boot from Xilinx Zynq MPSoC and verifiable fitImage
@@ -1094,8 +1054,8 @@ which is used to verify the signed
 fitImage with RSA2048/RSA4096 private key)
 
 
-11.4 CSU Introduction
-=====================
+8.4 CSU Introduction
+--------------------
 Hardware CSU processor embedded in ZynqMP SoC to handle security stuffs
 
 ZynqMP holds a triple redundant microblaze processor CSU to handle some security
@@ -1115,8 +1075,8 @@ authentication.
 Please refer to the chapter 12 in [3] for more secure boot information.
 
 
-11.5. Using Xilinx Design tools to make BOOT.BIN with AES encryption and RSA signature
---------------------------------------------------------------------------------------
+8.5. Using Xilinx Design tools to make BOOT.BIN with AES encryption and RSA signature
+-------------------------------------------------------------------------------------
 
 Prerequisites:
 
@@ -1128,8 +1088,8 @@ Prerequisites:
 After having downloaded and installed Xilinx SDK, then you can start to make
 RSA key pair and assemble your own zynqmp BOOT.BIN by bootgen command.
 
-11.5.1. Using bootgen in Xilinx Design tools
---------------------------------------------
+8.5.1. Using bootgen in Xilinx Design tools
+-------------------------------------------
 Set environment with below command:
 
    $ source <path_to_XSDK>/settings64.sh
@@ -1172,13 +1132,13 @@ Warning:
     will go into lockdown during boot.
 
 
-11.5.2 Detail steps about how to generate secure bootloader(BOOT.BIN)
----------------------------------------------------------------------
+8.5.2 Detail steps about how to generate secure bootloader(BOOT.BIN)
+--------------------------------------------------------------------
 Below example describes how to generate BOOT.BIN and the black key is stored
 in boot header.
 
-11.5.2.1 Prepare keys
----------------------
+8.5.2.1 Prepare keys
+--------------------
 
 So far, there are all the related files as below to generate BOOT.bin.
 	aes*.nky		//AES key to encrypt each partition in BOOT.BIN
@@ -1199,8 +1159,8 @@ Please do NOT modify paths for the following components in the bif file:
 	system-top.dtb
 	u-boot.elf
 
-11.5.2.2 Build BOOT.BIN with secure boot
-----------------------------------------
+8.5.2.2 Build BOOT.BIN with secure boot
+---------------------------------------
 
 If the BOOT.BIN with secure boot feature is required, first run the steps described
 in the chapter "6.2 Build BOOT.BIN in WRLinux" to modify conf/local.conf, then run
@@ -1219,15 +1179,15 @@ NOTE: Add the following line to conf/local.conf to enable the detailed decryptio
 The BOOT.BIN file is created in the deploy dir as follows:
 	tmp/deploy/images/amd-zynqmp/boot.bin
 
-11.6. Programming BBRAM and eFUSE
----------------------------------
+8.6. Programming BBRAM and eFUSE
+--------------------------------
 After all the development effort, it is recommended to use BBRAM or eFUSE to
 save key for protecting product. About how to burn BBRAM and eFUSE, please
 refer to [5].
 
 
-11.7. A verifiable fitimage
----------------------------
+8.7. A verifiable fitimage
+--------------------------
 
 u-boot uses rsa2048/rsa4096 cryptographic algorithms to 'sign' software images.
 Images are signed with a private key of the ras2048/rsa4096 key pair that is only
@@ -1265,11 +1225,11 @@ Note:
    Set KERNEL_RAS_TYPE as the expected value. The default one is rsa2048.
 
 
-11.8. Enable secure boot for BSP amd-zynqmp
--------------------------------------------
+8.8. Enable secure boot for BSP amd-zynqmp
+------------------------------------------
 
-11.8.1 Build amd-zynqmp BSP project with secure-boot template
--------------------------------------------------------------
+8.8.1 Build amd-zynqmp BSP project with secure-boot template
+------------------------------------------------------------
 Detail steps as below:
 	$ mkdir <path_to_project>
 	$ cd <path_to_project>
@@ -1284,8 +1244,8 @@ includes dtb and kernel image. They are all signed by the private key of a RSA-2
 <path_to_project>/layers/amd-zynqmp/zynqmp_keys/fitImage-rsa2048-keys and
 <path_to_project>/layers/amd-zynqmp/zynqmp_keys/fitImage-rsa4096-keys
 
-11.8.2 Boot fitImage
---------------------
+8.8.2 Boot fitImage
+-------------------
 The fitImage is booted with command "bootm".
 There is an example as below, download kernel from tftp server and mount NFS file system.
 
@@ -1307,8 +1267,8 @@ There is another example based on wic image, load kernel from sd boot partition 
 	# setenv bootcmd 'fatload mmc 0:1 $loadaddr $bootfile; bootm ${loadaddr}#${dtbfile}#${dtbofile}'
 	# run bootcmd
 
-11.9. Notes
------------
+8.9. Notes
+----------
 
 Only encryption and authentication part of CSU are validated, other functions
 like tamper event detection and response belongs to CSU bootrom codes, please
@@ -1324,7 +1284,7 @@ like the following:
   SEC_LK, JTAG_DIS, ERR_DIS, BBRAM_DIS, ENC_ONLY, etc.
 
 
-11.10. References
+8.10. References
 -----------------
 
 [1] http://www.wiki.xilinx.com/Zynq+UltraScale+MPSoC+Secure+Boot
