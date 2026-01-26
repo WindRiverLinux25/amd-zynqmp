@@ -3,8 +3,9 @@
 
 1. About this document
 ======================
-This document provides common and non-hardware specific information.
-Please refer to README.hardware for hardware specific information.
+
+This document provides common and non-hardware-specific information.
+Please refer to the README.hardware for hardware specific information.
 
 Dependencies
 ------------
@@ -19,22 +20,19 @@ This layer depends on the following layers supplied with Wind River Linux:
 	meta-arm/meta-arm
 	meta-amd-adaptive-socs/meta-amd-adaptive-socs-bsp
 
-
 Maintenance
 -----------
 This layer is maintained by Wind River Systems, Inc.
 Contact <support@windriver.com> or your support representative for more
 information on submitting changes.
 
-
 Building the zynqmp layer
 -------------------------
 This layer and wrlinux layer should be added to bblayers.conf.
 
-
 License
 -------
-Copyright (C) 2025 Wind River Systems, Inc.
+Copyright (C) 2026 Wind River Systems, Inc.
 
 Source code included in the tree for individual recipes is under the LICENSE
 stated in the associated recipe (.bb file) unless otherwise stated.
@@ -59,6 +57,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
+
 2. BSP Kernel and Distros
 =========================
 
@@ -76,14 +75,15 @@ by running 'bitbake -e | grep "^TARGET_SUPPORTED_KTYPES"'.
 
 Note: The preempt-rt kernel type can be used with this BSP/Machine.
 
+
 3. Board Specific Patches
 =========================
 
 To get a list of patches applied to the kernel specific to this BSP along with
-patch descriptions use git-whatchanged on the default kernel. For example:
+patch descriptions, use git-whatchanged on the default kernel. For example:
 
-	%> cd tmp/work-shared/<bsp_name>/kernel-source
-	%> git whatchanged <kernel_version>/standard/base..<kernel_version>/standard/<bsp_name>
+	(build-host)$ cd <PROJECT_DIR>/build/tmp/work-shared/<bsp_name>/kernel-source
+	(build-host)$ git whatchanged <kernel_version>/standard/base..<kernel_version>/standard/<bsp_name>
 
 
 4. Boot Instructions
@@ -243,7 +243,7 @@ following commands to set the U-Boot environment variables and boot:
 5. WIC Notes
 ============
 
-User can use the OpenEmbedded Image Creator to create the properly partitioned
+Users can use the OpenEmbedded Image Creator to create the properly partitioned
 image on a SD card. It generates partitioned images from existing OpenEmbedded
 build artifacts. Please refer to the following URL for more detailed partition
 information about WIC:
@@ -251,18 +251,19 @@ information about WIC:
 https://docs.yoctoproject.org/singleindex.html#creating-partitioned-images-using-wic
 
 This BSP supports disk images for SD card.
-After building the project, user will get a WIC image under the directory
+After building the project, users will get a WIC image under the directory
 tmp/deploy/images/<bsp name>/, such as:
 
-	<path_to_your_project>/tmp/deploy/images/amd-zynqmp/wrlinux-image-<rootfs_type>-amd-zynqmp.rootfs.wic
+	<PROJECT_DIR>/build/tmp/deploy/images/amd-zynqmp/wrlinux-image-<rootfs_type>-amd-zynqmp.rootfs.wic
 
-NOTE: The WIC image built in WRLinux does not contain the bootloader BOOT.BIN
+Note: The WIC image built in WRLinux does not contain the bootloader BOOT.BIN
 by default. Please refer to the section "7.1 BOOT.BIN" for the detailed
 description about how to create a bootable WIC image.
 
 To burn WIC image to SD card, users only need to execute the below command:
 
 	(build-host)$ sudo dd if=wrlinux-image-<rootfs_type>-amd-zynqmp.rootfs.wic of=/dev/your_sd_dev
+
 
 6. Common Features
 ==================
@@ -296,13 +297,14 @@ Add crashkernel=512M to the kernel cmdline
    $ cansend can0 1F334455#1122334455667788
    $ ip link set can0 down
 
-NOTE: The 3-4 and 5-6 pins of J98 should be connected by jumpers to install 120ohm
-between CAN_H and CAN_L.
+NOTE: The 3-4 and 5-6 pins of J98 should be connected by jumpers to install
+120ohm between CAN_H and CAN_L.
 
 6.3 DisplayPort
 ---------------
 
-According to the vendor, only some monitors in the following link are supported:
+According to the vendor, only some monitors in the following link are
+supported:
   https://www.xilinx.com/support/answers/68671.html
 
 6.3.1 DP Display
@@ -326,39 +328,51 @@ Show and adjust screen resolution, some draw examples
 6.3.2 DP Audio
 --------------
 
-Connect loudspeaker or headset with display monitor, and then run below commands:
+Connect loudspeaker or headset with display monitor, and then run below
+commands:
 	# aplay -l
 	# speaker-test -c2 -twav
 
-6.4 suspend/resume
+6.4 Suspend/Resume
 ------------------
+6.4.1 Suspend
+-------------
+The ZynqMP platforms support the following sleep states:
+    root@amd-zynqmp:~# cat /sys/power/state
+    freeze mem
 
-"Suspend-To-RAM" is supported by running below command:
+Enter the "mem" sleep state:
+    root@amd-zynqmp:~# echo mem > /sys/power/state
 
-	# echo mem > /sys/power/state
+6.4.2 Resume
+------------
+To wake up the system from sleep state, customers can use RTC or serial
+as a wake-up source.
 
-To wake up system, customer can use network, rtc, console and so on, it depends on concrete scenario.
-Below is an example to wake up system by console.
-Run below command before entering suspend status.
-	# echo enabled > /sys/class/tty/ttyPS0/power/wakeup
-And then, press Enter key in console window.
+Run the following commands to enable the serial port as a wake-up source:
+    root@amd-zynqmp:~# echo enabled > /sys/class/tty/ttyPS0/power/wakeup
+
+Run the following commands to wake up the system after an 8-second sleep:
+    root@amd-zynqmp:~# rtcwake -v -s 8 -m mem
 
 6.5 System Monitor
 ------------------
 
-System monitor includes PL monitor and PS monitor.
-Each system monitor measures voltage and temperature to provide information and alarms
-to other parts of the system including the PMU, RPU, and APU processors.
+System monitor includes PL monitor and PS monitor. Each system monitor
+measures voltage and temperature to provide information and alarms to
+other parts of the system including the PMU, RPU, and APU processors.
 
-Customer could check the detail system monitor interfaces with below command:
+Customers can check the detail system monitor interfaces with below command:
 	# ls -la /sys/bus/iio/devices/iio:device0
 
 6.6 CANFD
 ---------
 
-Based on CANFD FPGA LogiCORE IP from Xilinx, there are 2 canfd devices on FPGA side.
-An example is provided to verify can/canfd driver with the ZCU102 board and
-FMC extend board(https://www.xilinx.com/products/boards-and-kits/1-12nths4.html).
+Based on CANFD FPGA LogiCORE IP from Xilinx, there are 2 canfd devices on
+FPGA side. An example is provided to verify can/canfd driver with the
+ZCU102 board and an FMC extend board. The detailed information of the FMC
+extend board is at:
+	https://www.xilinx.com/products/boards-and-kits/1-12nths4.html
 
 6.6.1 Generate xsa file
 -----------------------
@@ -389,19 +403,20 @@ deploy them to ZCU102 board.
 If can1 dump data from can2, CANFD feature works fine.
 
 There is a Xilinx Wiki link as below, it is a CANFD development guide.
-It may offer some help when customer develops CANFD feature on their own platform.
-https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18842496/Linux+CAN+driver
+It may offer some help when customer develops CANFD feature on their own
+platform.
+	https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18842496/Linux+CAN+driver
 
-NOTE: The Xilinx official BOOT.BIN release doesn't contain the FPGA implementation of
-CANFD, please connect with Xilinx to get professional technical support about how to
-design CANFD on FPGA side.
+NOTE: The Xilinx official BOOT.BIN release doesn't contain the FPGA
+implementation of CANFD, please connect with Xilinx to get professional
+technical support about how to design CANFD on FPGA side.
 
 6.7 USB
 -------
 
-The USB interface on the PS-side serves multiple roles as a host, device, and OTG
-controller. Please change kernel options and dts file according to the descriptions
-in the following link:
+The USB interface on the PS-side serves multiple roles as a host, device,
+and OTG controller. Please change kernel options and dts file according to
+the descriptions in the following link:
 
   https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841729/Zynq+Ultrascale+MPSOC+Linux+USB+device+driver
 
@@ -419,8 +434,9 @@ And the USB Jumper Settings on the ZCU102 board are described below.
     J109    J110    J112    J113    J7
     2-3     1-2     1-2     1-2     OFF
 
-In addition to the method which modifies "dr_mode" property in dts file, you can change this property
-by using "fdt" u-boot command. The example for USB device mode is as described below:
+In addition to the method which modifies "dr_mode" property in dts file,
+you can change this property by using "fdt" u-boot command. The example
+for USB device mode is as described below:
 
 	=> tftpboot 0x10000000 Image; tftpboot 0x13800000 dtb
 	=> fdt addr 0x13800000; fdt resize; fdt set /axi/usb@ff9d0000/usb@fe200000 dr_mode peripheral
@@ -439,16 +455,17 @@ The example to change "dr_mode" to "otg" is as described below:
 	=> booti 0x10000000 - 0x13800000
 
 NOTE:
-1. USB OTG mode can only work at USB2.0 speed for host & device, and file this question to
-the vendor, the following link is their answer:
+1. USB OTG mode can only work at USB2.0 speed for host & device, and file
+this question to the vendor, the following link is their answer:
   https://support.xilinx.com/s/question/0D52E00006hpgaGSAQ/otg-in-zcu102-with-rev-1-0-doesnt-work-on-the-latest-sdk-v20174
-2. USB OTG mode requires that the kernel option CONFIG_USB_DWC3_OTG is enabled.
+2. USB OTG mode requires that the kernel option CONFIG_USB_DWC3_OTG is
+enabled.
 
 6.8 PCIe
 --------
 
-Only some limited PCIe devices were supported based on the SDK v2025.01 and the
-following link:
+Only some limited PCIe devices were supported based on the SDK v2025.2 and
+the following link:
 
   https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18842417/Linux+ZynqMP+PS-PCIe+Root+Port+Driver
 
@@ -457,9 +474,9 @@ following link:
 
 3D-graphics apps call Mali-libs API(libmali-xlnx) to drive the Mali400 GPU
 directly by Mali400 kernel driver.
-Some of mesa-demos test cases can be used to validate this function under limitation,
-but we just keep this part as-is without further debugging since only binary
-libs are available.
+Some of mesa-demos test cases can be used to validate this function under
+limitation, but we just keep this part as-is without further debugging
+since only binary libs are available.
 
 Due to the software license terms, we are not permitted to redistribute the
 libmali-xlnx components. Due to this, we are unable to support the components
@@ -496,8 +513,8 @@ NOTE: multilib is NOT supported for mali400 feature.
 6.10 SATA
 ---------
 
-When your SATA hard disk data is corrupted, the system might report a hard link
-reset, then try the following command:
+When your SATA hard disk data is corrupted, the system might report a hard
+link reset, then try the following command:
 
      $ echo "- - -" > /sys/class/scsi_host/host1/scan
        ata2: hard resetting link
@@ -1083,7 +1100,7 @@ Prerequisites:
   * RSA key pair related knowledges, like using openssl to make RSA key pair.
   * Please carefully read chapter 8, 11, 12 in [3], chapter 8 and 16 in [4],
     chapter 5 in [9] and all content of [5] in References section.
-  * Download and install Xilinx SDK v2025.1 or later version via link [7].
+  * Download and install Xilinx SDK v2025.2 or later version via link [7].
 
 After having downloaded and installed Xilinx SDK, then you can start to make
 RSA key pair and assemble your own zynqmp BOOT.BIN by bootgen command.
