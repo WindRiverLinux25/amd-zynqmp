@@ -16,7 +16,7 @@ INITRAMFS_IMAGE ??= ""
 # Avoid the definition "devicetree/*.dtbo;devicetree/" of IMAGE_BOOT_FILES in meta-xilinx to
 # break do_image_otaimg.
 IMAGE_BOOT_FILES = " Image zynqmp-zcu102-rev1.0.dtb boot.scr ${INITRAMFS_IMAGE}-${MACHINE}.${INITRAMFS_FSTYPES};initramfs "
-IMAGE_BOOT_FILES:append = "${@bb.utils.contains_any('WRL_ZYNQMP_BOOTBIN_TARGET', 'zcu102', ' boot.bin', '', d)}"
+IMAGE_BOOT_FILES:append = "${@bb.utils.contains_any('DISTRO_FEATURES', 'xilinx-bootloader', ' boot.bin system.dtb', '', d)}"
 
 OSTREE_BOOTSCR_PRECMD ?= "\
 setenv no_menu yes; \
