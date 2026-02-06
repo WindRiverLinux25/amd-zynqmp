@@ -925,7 +925,7 @@ following commands:
 
 	(build-host)$ cd <PROJECT_DIR>; . ./environment-setup-x86_64-wrlinuxsdk-linux; . ./oe-init-build-env
 	(build-host)$ cp conf/dts/<your_workflow_machine_name>/pl-overlay-full/pl.dtsi <PROJECT_DIR>/layers/amd-zynqmp/recipes-firmware/zynqmp-fw-demo/files
-	(build-host)$ cp hw-description/<your_workflow_machine_name>/<path_to_bit>/<proj>.bit <PROJECT_DIR>/layers/amd-zynqmp/recipes-firmware/zynqmp-fw-demo/files
+	(build-host)$ cp hw-description/<path_to_bit>/<proj>.bit <PROJECT_DIR>/layers/amd-zynqmp/recipes-firmware/zynqmp-fw-demo/files
 	(build-host)$ cat << _EOF >> conf/local.conf
 IMAGE_INSTALL:append = " zynqmp-fw-demo"
 CUSTOMER_RECIPES:wr-amd-zynqmp += 'zynqmp-fw-demo'
