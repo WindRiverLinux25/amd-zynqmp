@@ -645,7 +645,7 @@ The following is the meta-amd-adaptive-socs-bsp flow diagram:
 
 						Figure 3 Meta-amd-adaptive-socs-bsp Flow
 
-Use the following commands to build BOOT.BIN for the VCK190 board:
+Use the following commands to build BOOT.BIN for the ZCU102 board:
 
 	(build-host)$ cd <PROJECT_DIR>; . ./environment-setup-x86_64-wrlinuxsdk-linux; . ./oe-init-build-env
 	(build-host)$ cat << _EOF >> conf/local.conf
@@ -798,6 +798,7 @@ section "7.1.4.3 SDTGen" before executing the following commands:
 
 	(build-host)$ cd <PROJECT_DIR>; . ./environment-setup-x86_64-wrlinuxsdk-linux; . ./oe-init-build-env
 	(build-host)$ cat << _EOF >> conf/local.conf
+BB_NO_NETWORK = '0'
 CUSTOMER_RECIPES:openembedded-layer += 'kconfig-frontends'
 CUSTOMER_RECIPES:meta-python += 'python3-humanfriendly'
 CUSTOMER_RECIPES:virtualization-layer += 'lopper'
@@ -854,7 +855,6 @@ After running the steps in the section "7.1.4.4 gen-machineconf", run the
 following steps to build a WRLinux image:
 
 	(build-host)$ cat << _EOF >> conf/local.conf
-BB_NO_NETWORK = '0'
 WORKFLOW_MACHINE_NAME = "<workflow_machine_name>"
 DISTRO_FEATURES:append = " xilinx-bootloader"
 CUSTOMER_RECIPES:xilinx += 'bootgen'
@@ -1313,3 +1313,23 @@ like the following:
 [7] https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/embedded-design-tools.html
 [8] https://github.com/Xilinx/u-boot-xlnx  //The fitImage-related docs in path_to_u-boot-xlnx/doc
 [9] https://www.xilinx.com/support/documentation/sw_manuals/xilinx2017_2/ug1209-embedded-design-tutorial.pdf
+
+
+9. Known Issues
+===============
+
+9.1 SPI-NOR Flash
+-----------------
+The SPI-NOR Flash on ZCU102 Board does not support read/write operations
+starting at an odd offset with sizes larger than 4MB. The following error
+can be observed:
+
+	root@amd-zynqmp:~# mtd_debug read /dev/mtd3 1 0x400000 /tmp/source.filename
+	read(): Cannot allocate memory
+
+9.2 USB OTG
+-----------
+When configuring the ZCU102 board as a host to test the OTG functionality,
+it fails to enumerate a USB device after multiple connect/disconnect
+iterations. Please refer to the following link for a detailed description.
+	https://adaptivesupport.amd.com/s/article/000039307?language=en_US
