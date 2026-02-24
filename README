@@ -1171,9 +1171,9 @@ And substitute the string "<path_to_place_keys>" in the bif file with <your_keys
 Please do NOT modify paths for the following components in the bif file:
 	pmufw.elf
 	fsbl.elf
-	download-amd-zynqmp.bit
+	<your_bitstream_file>
 	arm-trusted-firmware.elf
-	system-top.dtb
+	<your_dtb_file>
 	u-boot.elf
 
 8.5.2.2 Build BOOT.BIN with secure boot
